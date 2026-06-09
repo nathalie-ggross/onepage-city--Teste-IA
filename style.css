@@ -1,0 +1,583 @@
+/* Paleta: branco, preto, cinza, azul escuro */
+:root {
+  --bg: #f4f5f7;
+  --ink: #0b1220;
+  --ink-2: #2a3246;
+  --muted: #6b7380;
+  --brand: #1a3566;      /* azul escuro */
+  --brand-2: #274a8a;
+  --brand-ink: #0d1f42;
+  --border: #dde1ea;
+  --panel: #ffffff;
+  --panel-2: #f8f9fb;
+  --gray-1: #2a3246;
+  --gray-2: #8a93a3;
+  --gray-3: #c5cbd6;
+  --shadow: 0 1px 2px rgba(11,18,32,0.05), 0 6px 22px rgba(11,18,32,0.06);
+  --radius: 10px;
+  font-size: 15px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ---------- Topbar ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 20px;
+  padding: 14px 28px;
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(11, 34, 66, 0.25);
+}
+.brand { display:flex; align-items:center; gap: 12px; min-width: 260px; }
+.brand h1 { margin: 0; font-size: 17px; letter-spacing: 0.2px; font-weight: 700; }
+.brand .sub { margin: 2px 0 0; font-size: 12px; opacity: 0.82; }
+.logo {
+  width: 38px; height: 38px; border-radius: 8px; display:inline-flex;
+  align-items:center; justify-content:center;
+  background: #fff; color: var(--brand); font-weight: 900; letter-spacing: 0.5px;
+}
+
+.search-wrap { position: relative; flex: 1; max-width: 640px; }
+#search {
+  width: 100%; padding: 11px 16px; border-radius: 8px; border: 0;
+  background: #fff; color: var(--ink);
+  font-size: 15px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+}
+#search:focus { outline: 2px solid #fff; outline-offset: 2px; }
+
+.suggestions {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: #fff; color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px;
+  list-style: none; margin: 0; max-height: 320px; overflow: auto;
+  box-shadow: 0 14px 32px rgba(11,18,32,0.15);
+}
+.suggestions li {
+  padding: 9px 12px; border-radius: 6px; cursor: pointer;
+  display: flex; justify-content: space-between; gap: 8px; font-size: 14px;
+}
+.suggestions li:hover, .suggestions li.active { background: var(--panel-2); }
+.suggestions .uf { color: var(--muted); font-size: 12px; }
+
+.btn-ghost {
+  border: 1px solid rgba(255,255,255,0.4); background: transparent; color: #fff;
+  padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.12); }
+
+/* ---------- Landing ---------- */
+.landing {
+  max-width: 920px; margin: 80px auto; text-align: center; padding: 0 24px;
+}
+.landing h2 { font-size: 34px; margin: 0 0 14px; color: var(--ink); letter-spacing: -0.3px; }
+.landing p { color: var(--ink-2); font-size: 17px; line-height: 1.55; }
+.examples { margin-top: 28px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.examples span { color: var(--muted); font-size: 14px; }
+.example {
+  background: #fff; border: 1px solid var(--border); color: var(--brand);
+  padding: 9px 16px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 600;
+}
+.example:hover { background: var(--brand); border-color: var(--brand); color: #fff; }
+.landing-note { margin-top: 22px; color: var(--muted); font-size: 12.5px; max-width: 720px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+
+/* ---------- Dashboard ---------- */
+.dashboard { max-width: 1280px; margin: 24px auto 60px; padding: 0 24px; display: grid; gap: 14px; }
+
+.hero {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding: 18px 22px; background: #fff; border-radius: var(--radius);
+  box-shadow: var(--shadow); border: 1px solid var(--border);
+}
+.eyebrow { text-transform: uppercase; letter-spacing: 1.2px; color: var(--brand); font-size: 11px; margin: 0 0 4px; font-weight: 700; }
+#city-title { margin: 0; font-size: 30px; color: var(--ink); letter-spacing: -0.2px; }
+#city-sub { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+
+/* ---------- Tabs ---------- */
+.tabs {
+  display: flex; gap: 2px; padding: 4px;
+  background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.tab {
+  flex: 1; padding: 12px 16px; border: 0; background: transparent; cursor: pointer;
+  font-size: 14px; font-weight: 600; color: var(--muted); border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { background: var(--brand); color: #fff; }
+.tab-panel { display: none; flex-direction: column; gap: 14px; }
+.tab-panel.active { display: flex; }
+
+/* ---------- Cards ---------- */
+.card {
+  background: #fff; border-radius: var(--radius); padding: 18px 18px 20px;
+  box-shadow: var(--shadow); border: 1px solid var(--border);
+}
+.card h3 { margin: 0 0 14px; font-size: 15px; color: var(--ink); letter-spacing: 0.1px; font-weight: 700; }
+.card.pending { background: var(--panel-2); border-style: dashed; }
+.card.pending p { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.55; }
+.card.pending code { background: #fff; padding: 2px 6px; border-radius: 4px; font-size: 13px; border: 1px solid var(--border); }
+
+/* ---------- KPIs ---------- */
+.kpis {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+}
+.kpi {
+  background: #fff; border-radius: var(--radius); padding: 13px 14px;
+  box-shadow: var(--shadow); border: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 4px; min-height: 76px; justify-content: center;
+}
+.kpi.big { background: var(--brand); color: #fff; border-color: var(--brand); }
+.kpi.big .k-label { color: rgba(255,255,255,0.78); }
+.kpi.big .k-val { color: #fff; font-size: 26px; }
+.kpi .k-label { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+.kpi .k-val { font-size: 22px; font-weight: 800; color: var(--ink); }
+.kpi .k-compare {
+  font-size: 11px; color: var(--muted); margin-top: 4px;
+  padding-top: 4px; border-top: 1px dashed var(--border);
+}
+.kpi .k-compare strong { color: var(--brand); font-weight: 700; }
+.kpis.kpis-2 { grid-template-columns: repeat(2, 1fr); }
+.kpis.kpis-3 { grid-template-columns: repeat(3, 1fr); }
+.kpis.kpis-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 760px) {
+  .kpis.kpis-2, .kpis.kpis-3, .kpis.kpis-4 { grid-template-columns: 1fr; }
+}
+
+/* ---------- Grid ---------- */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* ---------- Charts ---------- */
+/* IMPORTANTE: Chart.js precisa que o `.chart-wrap` seja `position: relative`
+   com altura definida e SEM display:flex — caso contrário o canvas perde
+   dimensões e o gráfico some. Para centralizar visualmente, controlamos só
+   a largura no chart-wrap, e centralizamos verticalmente promovendo o CARD
+   (parent do chart-wrap) a flex column. */
+.chart-wrap { position: relative; height: 320px; }
+.chart-wrap.small {
+  position: relative;
+  height: 220px;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+.chart-wrap canvas { display: block; }
+
+/* Cards que contêm um doughnut pequeno (gênero, etc.): vira flex column para
+   centralizar verticalmente o conjunto chart+legenda quando o card é esticado
+   pelo grid-2 ao lado. O h3 fica no topo, o resto preenche e centraliza. */
+.card:has(> .chart-wrap.small) {
+  display: flex;
+  flex-direction: column;
+}
+.card:has(> .chart-wrap.small) > .chart-wrap.small {
+  margin-top: auto;
+}
+.card:has(> .chart-wrap.small) > .legend {
+  margin-bottom: auto;
+}
+/* Snapshot PNG sobreposto ao canvas durante a impressão */
+.chart-wrap img.print-snapshot,
+.card img.print-snapshot {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #fff;
+}
+.legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; }
+.legend .dot { display:inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+/* ---------- Tables ---------- */
+.table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.table th, .table td {
+  text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border);
+}
+.table th { background: var(--panel-2); color: var(--ink-2); font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; }
+.table th.num, .table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table tbody tr:hover { background: var(--panel-2); }
+.table tfoot td { font-weight: 800; background: var(--brand-ink); color: #fff; }
+.table td.diff-pos { color: #1a7a4c; font-weight: 700; }
+.table td.diff-neg { color: #b03a1e; font-weight: 700; }
+.table-wrap { max-height: 460px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+.mini-search {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+  margin-bottom: 10px; font-size: 14px; background: #fff;
+}
+.muni-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.muni-list .chip {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--ink-2);
+  padding: 4px 10px; border-radius: 999px; font-size: 12.5px;
+}
+.muni-list .chip.current { background: var(--brand); color: #fff; border-color: var(--brand); font-weight: 600; }
+
+.muted { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+
+/* ---------- Map ---------- */
+.map { height: 420px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.map-sm { height: 280px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+
+/* ---------- IQM ---------- */
+.iqm-wrap {
+  display: grid; grid-template-columns: 220px 1fr; gap: 18px; align-items: center;
+}
+.iqm-score {
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff; border-radius: 10px; padding: 18px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 140px;
+}
+.iqm-val { font-size: 56px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.iqm-scale { font-size: 11px; opacity: 0.78; letter-spacing: 0.4px; text-transform: uppercase; }
+.iqm-tier {
+  margin-top: 6px; padding: 4px 12px; background: rgba(255,255,255,0.18);
+  border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+}
+.iqm-bars { display: flex; flex-direction: column; gap: 8px; }
+.iqm-bar-row { display: grid; grid-template-columns: 200px 1fr 70px 70px; gap: 10px; align-items: center; font-size: 12.5px; }
+.iqm-bar-row .label { color: var(--ink-2); font-weight: 600; }
+.iqm-bar-row .track { height: 10px; background: var(--panel-2); border-radius: 6px; overflow: hidden; position: relative; border: 1px solid var(--border); }
+.iqm-bar-row .fill { height: 100%; background: var(--brand); border-radius: 6px; transition: width 0.4s; }
+.iqm-bar-row .fill.poa { background: var(--gray-2); opacity: 0.7; position: absolute; top: 0; left: 0; }
+.iqm-bar-row .val { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+.iqm-bar-row .ref { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+@media (max-width: 760px) {
+  .iqm-wrap { grid-template-columns: 1fr; }
+  .iqm-bar-row { grid-template-columns: 1fr 1fr 60px 60px; gap: 6px; }
+}
+
+/* ---------- Profile / Hospitals ---------- */
+.profile { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.profile .line {
+  padding: 10px 12px; background: var(--panel-2); border-radius: 8px;
+  border-left: 3px solid var(--brand); font-size: 14px; color: var(--ink-2);
+}
+.profile .line strong { color: var(--ink); }
+
+.hospitals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.hospital {
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px; display: flex; gap: 12px;
+}
+.hospital .photo {
+  width: 96px; height: 96px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 34px; font-weight: 800; flex-shrink: 0;
+}
+.hospital .info h4 { margin: 0 0 4px; font-size: 14.5px; }
+.hospital .info p { margin: 2px 0; font-size: 12.5px; color: var(--ink-2); }
+.hospital .tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+.hospital .tag {
+  background: #fff; border: 1px solid var(--border); color: var(--brand); font-size: 11px;
+  padding: 2px 8px; border-radius: 999px; font-weight: 600;
+}
+.hospital .leitos-summary {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+}
+.leito-badge {
+  font-size: 11.5px; padding: 3px 9px; border-radius: 6px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.leito-sus { background: var(--brand); color: #fff; }
+.leito-priv { background: var(--gray-2); color: #fff; }
+.leito-tot { background: var(--brand-ink); color: #fff; }
+.leito-uti { background: #d94a4a; color: #fff; }
+
+/* ---------- Top 3 Hospitais (Infraestrutura) ---------- */
+.top3 { display: grid; gap: 18px; }
+.top3-hospital {
+  display: grid; grid-template-columns: 280px 1fr; gap: 20px;
+  background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 18px;
+}
+.top3-photo {
+  height: 240px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.top3-photo::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.12) 0, transparent 40%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.08) 0, transparent 40%);
+}
+.top3-photo .rank {
+  position: absolute; top: 10px; left: 10px;
+  background: #fff; color: var(--brand); font-weight: 900; font-size: 18px;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.top3-photo .icon { font-size: 92px; opacity: 0.95; z-index: 1; }
+.top3-photo .name-strip {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 8px 12px; font-size: 12px; font-weight: 600;
+  background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
+  z-index: 1;
+}
+.top3-photo .photo-attr {
+  position: absolute; top: 8px; right: 10px;
+  font-size: 9.5px; color: #fff;
+  background: rgba(0,0,0,0.55); padding: 2px 8px; border-radius: 4px;
+  z-index: 1; letter-spacing: 0.2px;
+}
+.top3-body h4 { margin: 0 0 2px; font-size: 18px; color: var(--ink); }
+.top3-body .sub-info { margin: 0 0 4px; color: var(--muted); font-size: 13px; }
+.top3-body .unit-note { color: var(--brand); font-weight: 600; margin-bottom: 10px; font-size: 12px; }
+.top3-stats {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;
+}
+.top3-stat {
+  background: var(--panel-2); border-radius: 8px; padding: 10px; text-align: center; border: 1px solid var(--border);
+}
+.top3-stat .label { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); font-weight: 600; }
+.top3-stat .value { display: block; font-size: 22px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+.top3-stat.sus { background: var(--brand); color: #fff; border-color: var(--brand); }
+.top3-stat.sus .label, .top3-stat.sus .value { color: #fff; }
+
+.top3-section { margin-top: 12px; }
+.top3-section h5 {
+  margin: 0 0 6px; font-size: 11.5px; text-transform: uppercase; color: var(--muted);
+  letter-spacing: 0.4px; font-weight: 700;
+}
+.leito-type-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.leito-type {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--ink-2);
+  font-size: 11.5px; padding: 4px 9px; border-radius: 6px; font-weight: 500;
+}
+.leito-type strong { color: var(--brand); font-weight: 700; }
+
+.spec-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.spec-tag {
+  background: #fff; border: 1px solid var(--brand); color: var(--brand);
+  font-size: 11.5px; padding: 3px 9px; border-radius: 999px; font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .top3-hospital { grid-template-columns: 1fr; }
+  .top3-photo { height: 180px; }
+  .top3-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ---------- Loader / Error ---------- */
+.loader {
+  position: fixed; inset: 0; background: rgba(11, 18, 32, 0.6); color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+}
+.spinner {
+  width: 46px; height: 46px; border: 4px solid rgba(255,255,255,0.2);
+  border-top-color: #fff; border-radius: 50%; animation: spin 0.9s linear infinite;
+  margin-bottom: 14px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error {
+  max-width: 720px; margin: 40px auto; padding: 16px 20px;
+  background: #fff4f2; border: 1px solid #ffd0c5; color: #b03a1e; border-radius: 10px;
+}
+
+.foot { text-align: center; color: var(--muted); font-size: 12px; padding: 8px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+  .profile { grid-template-columns: 1fr; }
+  .hospitals { grid-template-columns: 1fr; }
+  .topbar { flex-wrap: wrap; }
+}
+
+@media print {
+  @page { size: A4 portrait; margin: 10mm; }
+
+  /* Força fundos/cores a imprimirem */
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html, body { background: #fff !important; }
+  .topbar, .tabs, .mini-search, .loader, .suggestions, .hero-actions,
+  .card.pending { display: none !important; }
+
+  .dashboard { max-width: none; margin: 0; padding: 0; gap: 6px; }
+  .hero { page-break-after: avoid; margin-bottom: 4px; }
+
+  /* Imprime TODAS as abas, uma por página */
+  .tab-panel { display: flex !important; page-break-before: always; gap: 6px; }
+  .tab-panel[data-panel="micro"] { page-break-before: avoid; }
+  .tab-panel[data-panel="micro"]::before  { content: "MICRORREGIÃO"; }
+  .tab-panel[data-panel="cidade"]::before { content: "CIDADE"; }
+  .tab-panel[data-panel="infra"]::before  { content: "INFRAESTRUTURA"; }
+  .tab-panel::before {
+    display: block; font-size: 13px; font-weight: 800; color: #1a3566;
+    letter-spacing: 2px; border-bottom: 2px solid #1a3566;
+    padding: 0 0 3px; margin: 0 0 6px;
+  }
+
+  /* Evita quebra dentro de elementos importantes */
+  .card, .kpi, .hospital, .top3-hospital, .insight, .profile .line,
+  .chart-wrap, .map, .map-sm, .table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #c5cbd6 !important;
+    padding: 8px 10px !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+  .card h3 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+  .table thead { display: table-header-group; }
+  .table tfoot { display: table-footer-group; }
+
+  /* Charts — alturas fixas menores p/ A4 */
+  .chart-wrap {
+    height: 200px !important;
+    position: relative !important;
+    display: block !important;
+    max-width: 100% !important;
+  }
+  .chart-wrap.small {
+    height: 150px !important;
+    max-width: 240px !important;
+    margin: 0 auto !important;
+  }
+  /* Cards com pizza pequeno: replicar a centralização vertical da tela
+     (flex column + auto margins). Evita gráfico colado no topo quando
+     o grid-2 estica o card pela altura da pirâmide ao lado. */
+  .card:has(> .chart-wrap.small) {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .card:has(> .chart-wrap.small) > .chart-wrap.small {
+    margin-top: auto !important;
+  }
+  .card:has(> .chart-wrap.small) > .legend {
+    margin-bottom: auto !important;
+    font-size: 10px !important;
+    gap: 8px !important;
+    margin-top: 6px !important;
+  }
+  /* Bloco renda — block (flex quebra Chart.js) */
+  .card:has(canvas#city-renda) .chart-wrap {
+    height: 220px !important;
+  }
+  /* Pirâmide compactada para não esticar demais o card vizinho */
+  .card:has(canvas#city-pyramid) .chart-wrap,
+  .card:has(canvas#micro-pyramid) .chart-wrap { height: 280px !important; }
+  .map { height: 240px !important; }
+  .map-sm { height: 200px !important; }
+  /* Na impressão, o snapshot PNG é o que é exibido */
+  .print-snapshot {
+    position: absolute !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+    background: #fff !important;
+  }
+  canvas[data-print-replaced="1"] { visibility: hidden !important; }
+
+  /* KPIs compactos — caixa baixa, várias colunas no A4 portrait */
+  .kpis {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 3px !important;
+  }
+  .kpis.kpis-3 { grid-template-columns: repeat(3, 1fr) !important; }
+  .kpis.kpis-4 { grid-template-columns: repeat(4, 1fr) !important; }
+  .kpis.kpis-2 { grid-template-columns: repeat(2, 1fr) !important; }
+  .kpi {
+    padding: 4px 6px !important;
+    min-height: 0 !important;
+    gap: 1px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .kpi .k-val { font-size: 12.5px !important; line-height: 1.1 !important; font-weight: 800 !important; }
+  .kpi.big .k-val { font-size: 14px !important; }
+  .kpi .k-label { font-size: 7.5px !important; line-height: 1 !important; letter-spacing: 0.3px !important; }
+  .kpi .k-compare {
+    font-size: 7.5px !important;
+    padding-top: 1px !important;
+    margin-top: 1px !important;
+    border-top: none !important;
+  }
+
+  /* Top 3 hospitais */
+  .top3-hospital {
+    display: grid !important;
+    grid-template-columns: 140px 1fr !important;
+    gap: 10px !important; padding: 10px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  .top3-photo { height: 140px !important; }
+  .top3-photo .icon svg { width: 56px; height: 56px; }
+  .top3-stats { grid-template-columns: repeat(4, 1fr) !important; gap: 4px !important; }
+  .top3-stats .value { font-size: 14px !important; }
+  .top3-stat { padding: 5px 4px !important; }
+  .top3-stat .label { font-size: 8.5px !important; }
+
+  /* Tabelas compactas — fonte menor, quebra de palavra para nomes longos
+     (operadoras "COOPERATIVA DE SERVIÇOS DE SAÚDE..."), e larguras controladas
+     para que colunas numéricas não sumam à direita. */
+  .table {
+    font-size: 9.5px !important;
+    width: 100% !important;
+    table-layout: auto !important;
+    border-collapse: collapse !important;
+  }
+  .table th, .table td {
+    padding: 3px 4px !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+    vertical-align: top !important;
+  }
+  .table th { font-size: 8.5px !important; letter-spacing: 0.2px !important; }
+  .table th.num, .table td.num {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+  }
+  .table-wrap {
+    max-height: none !important;
+    overflow: visible !important;
+    border: none !important;
+    width: 100% !important;
+  }
+
+  /* Perfil e insights — coluna única para economizar espaço */
+  .grid-2 { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .profile { grid-template-columns: 1fr; gap: 4px; }
+  .profile .line { padding: 6px 8px; font-size: 11.5px; }
+
+  /* Aba Infra: ocultar o card do mapa no PDF (mantém só os 3 maiores hosp.) */
+  .card:has(#infra-map) { display: none !important; }
+
+  /* Títulos menores nos cards */
+  .card h3 { font-size: 12.5px; margin-bottom: 6px; }
+  .muted { font-size: 10px; }
+}

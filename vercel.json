@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    { "source": "/proxy/cnes", "destination": "/api/proxy/cnes" },
+    { "source": "/proxy/ans", "destination": "/api/proxy/ans" },
+    { "source": "/proxy/ans/multi", "destination": "/api/proxy/ans_multi" },
+    { "source": "/proxy/ans/history", "destination": "/api/proxy/ans_history" },
+    { "source": "/proxy/elastic/leitos", "destination": "/api/proxy/elastic_leitos" },
+    { "source": "/proxy/elastic/leitos/multi", "destination": "/api/proxy/elastic_leitos_multi" },
+    { "source": "/proxy/elastic/leitos/history", "destination": "/api/proxy/elastic_leitos_history" },
+    { "source": "/proxy/elastic/servicos", "destination": "/api/proxy/elastic_servicos" }
+  ]
+}

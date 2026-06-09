@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>One Page — Pesquisa de Cidades</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css?v=26">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">OP</span>
+    <div>
+      <h1>One Page — Pesquisa de Cidades</h1>
+      <p class="sub">IBGE · CNES · ANS</p>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <input id="search" type="search" placeholder="Digite o nome de uma cidade…" autocomplete="off">
+    <ul id="suggestions" class="suggestions" hidden></ul>
+  </div>
+  <button id="print-btn" class="btn-ghost">Imprimir</button>
+</header>
+
+<main id="main">
+
+  <section id="landing" class="landing">
+    <h2>Dossiê estratégico de qualquer município brasileiro</h2>
+    <p>Demografia (IBGE), rede de saúde (CNES) e saúde suplementar (ANS), estruturados em três abas:
+       <strong>Microrregião</strong>, <strong>Cidade</strong> e <strong>Infra da Cidade</strong>.</p>
+    <div class="examples">
+      <span>Exemplos:</span>
+      <button class="example" data-id="4314100" data-name="Passo Fundo" data-uf="RS">Passo Fundo · RS</button>
+      <button class="example" data-id="4314902" data-name="Porto Alegre" data-uf="RS">Porto Alegre · RS</button>
+      <button class="example" data-id="4305108" data-name="Caxias do Sul" data-uf="RS">Caxias do Sul · RS</button>
+      <button class="example" data-id="3550308" data-name="São Paulo" data-uf="SP">São Paulo · SP</button>
+      <button class="example" data-id="3304557" data-name="Rio de Janeiro" data-uf="RJ">Rio de Janeiro · RJ</button>
+      <button class="example" data-id="3106200" data-name="Belo Horizonte" data-uf="MG">Belo Horizonte · MG</button>
+      <button class="example" data-id="4106902" data-name="Curitiba" data-uf="PR">Curitiba · PR</button>
+      <button class="example" data-id="2927408" data-name="Salvador" data-uf="BA">Salvador · BA</button>
+    </div>
+    <p class="landing-note">Dados disponíveis para todos os 5.570 municípios brasileiros. Comparativos contra Porto Alegre · RS. Saúde suplementar (ANS) atualmente pré-processada para o estado do RS.</p>
+  </section>
+
+  <section id="dashboard" class="dashboard" hidden>
+
+    <div class="hero">
+      <div>
+        <p class="eyebrow" id="eyebrow-label">Município</p>
+        <h2 id="city-title">—</h2>
+        <p id="city-sub" class="sub">—</p>
+      </div>
+    </div>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="micro" role="tab">Microrregião</button>
+      <button class="tab" data-tab="cidade" role="tab">Cidade</button>
+      <button class="tab" data-tab="infra" role="tab">Infraestrutura</button>
+    </nav>
+
+    <!-- ================= ABA 1: MICRORREGIÃO ================= -->
+    <section class="tab-panel active" data-panel="micro">
+
+      <div class="card">
+        <h3 id="micro-title">Microrregião —</h3>
+        <div class="grid-2">
+          <div>
+            <p class="muted" id="micro-count">—</p>
+            <div id="micro-list" class="muni-list"></div>
+          </div>
+          <div>
+            <div id="micro-map" class="map-sm"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>População por município — ordem decrescente</h3>
+        <div class="table-wrap">
+          <table class="table" id="micro-pop-table">
+            <thead><tr><th>Município</th><th class="num">População 2022</th><th class="num">% Microrregião</th></tr></thead>
+            <tbody></tbody>
+            <tfoot></tfoot>
+          </table>
+        </div>
+        <p class="muted">Fonte: IBGE · Censo Demográfico 2022 (agregado 9514).</p>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi big"><span class="k-label">Total de habitantes · microrregião</span><span id="micro-total-pop" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Nº de municípios</span><span id="micro-total-mun" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Pop. ≥ 60 anos (microrregião)</span><span id="micro-60" class="k-val">—</span></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>População por gênero — microrregião</h3>
+          <div class="chart-wrap small"><canvas id="micro-gender"></canvas></div>
+          <div id="micro-gender-legend" class="legend"></div>
+        </div>
+        <div class="card">
+          <h3>Pirâmide etária — microrregião</h3>
+          <div class="chart-wrap"><canvas id="micro-pyramid"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Evolução populacional — microrregião</h3>
+        <div class="chart-wrap"><canvas id="micro-evolution"></canvas></div>
+        <p class="muted">Fonte: IBGE · Estimativas populacionais (agregado 6579).</p>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><span class="k-label">Beneficiários médico-hospitalar</span><span id="micro-ans-total" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Cobertura sobre população</span><span id="micro-ans-pct" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Operadoras ativas</span><span id="micro-ops-count" class="k-val">—</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Evolução dos beneficiários — microrregião</h3>
+        <div class="chart-wrap"><canvas id="micro-ans-evol"></canvas></div>
+        <p class="muted">Fonte: ANS · Informações consolidadas de beneficiários (PDA 024).</p>
+      </div>
+
+      <div class="card">
+        <h3>Operadoras de saúde — microrregião</h3>
+        <div class="table-wrap">
+          <table class="table" id="micro-ops-table">
+            <thead><tr><th>Operadora</th><th>Modalidade</th><th class="num">Beneficiários</th><th class="num">%</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="muted">Fonte: ANS · mês de referência <span id="micro-ans-month">—</span>. Apenas planos com cobertura médico-hospitalar (planos exclusivamente odontológicos não entram).</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Tipos de estabelecimentos de saúde — microrregião vs. Porto Alegre</h3>
+          <div class="table-wrap">
+            <table class="table" id="micro-types-table">
+              <thead><tr><th>Tipo de estabelecimento</th><th class="num">Microrregião</th><th class="num">Porto Alegre</th><th class="num">Δ%</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="muted">Fonte: CNES · apidadosabertos.saude.gov.br. Δ% = diferença percentual da microrregião em relação a Porto Alegre.</p>
+        </div>
+        <div class="card">
+          <h3>Serviços / estruturas — microrregião vs. Porto Alegre</h3>
+          <div class="table-wrap">
+            <table class="table" id="micro-services-table">
+              <thead><tr><th>Serviço / estrutura</th><th class="num">Microrregião</th><th class="num">Porto Alegre</th><th class="num">Δ%</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="muted">Flags de estrutura assistencial por estabelecimento (CNES). Δ% = diferença percentual da microrregião em relação a Porto Alegre.</p>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi big"><span class="k-label">Leitos totais · microrregião</span><span id="micro-leitos-tot" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Leitos SUS</span><span id="micro-leitos-sus" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Leitos privados</span><span id="micro-leitos-priv" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">UTI total</span><span id="micro-uti-tot" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Total de hospitais</span><span id="micro-hosp-count" class="k-val">—</span></div>
+      </div>
+
+      <div class="kpis kpis-3">
+        <div class="kpi">
+          <span class="k-label">Habitantes por leito total</span>
+          <span id="micro-habxleito-tot" class="k-val">—</span>
+          <span class="k-compare">Microrr. POA: <strong id="ref-micro-habxleito-tot">—</strong></span>
+        </div>
+        <div class="kpi">
+          <span class="k-label">Habitantes por leito SUS</span>
+          <span id="micro-habxleito-sus" class="k-val">—</span>
+          <span class="k-compare">Microrr. POA: <strong id="ref-micro-habxleito-sus">—</strong></span>
+        </div>
+        <div class="kpi">
+          <span class="k-label">Beneficiários por leito privado</span>
+          <span id="micro-benefxleito-priv" class="k-val">—</span>
+          <span class="k-compare">Microrr. POA: <strong id="ref-micro-benefxleito-priv">—</strong></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Leitos por hospital — microrregião</h3>
+        <div class="table-wrap">
+          <table class="table" id="micro-leitos-table">
+            <thead>
+              <tr>
+                <th>Hospital</th><th>Município</th><th>Tipo</th>
+                <th class="num">SUS</th><th class="num">Privado</th><th class="num">Total</th>
+                <th class="num">UTI</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot></tfoot>
+          </table>
+        </div>
+        <p class="muted">Fonte: CNES · Leitos (OpenDataSUS). Comparativo: microrregião de Porto Alegre.</p>
+      </div>
+
+      <div class="card">
+        <h3>Evolução dos leitos privados — microrregião</h3>
+        <div class="chart-wrap"><canvas id="micro-leitos-priv-evol"></canvas></div>
+        <p class="muted">Fonte: CNES · ElastiCNES (snapshot anual, última competência disponível).</p>
+      </div>
+
+    </section>
+
+    <!-- ================= ABA 2: CIDADE ================= -->
+    <section class="tab-panel" data-panel="cidade">
+
+      <div class="kpis">
+        <div class="kpi big"><span class="k-label">Habitantes — <span class="c-name">cidade</span></span><span id="city-pop" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Crescimento desde 2010</span><span id="city-growth" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Pop. ≥ 60 anos</span><span id="city-60" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Área (km²)</span><span id="city-area" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Densidade (hab/km²)</span><span id="city-dens" class="k-val">—</span></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>População por gênero</h3>
+          <div class="chart-wrap small"><canvas id="city-gender"></canvas></div>
+          <div id="city-gender-legend" class="legend"></div>
+        </div>
+        <div class="card">
+          <h3>Pirâmide etária</h3>
+          <div class="chart-wrap"><canvas id="city-pyramid"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Evolução populacional</h3>
+        <div class="chart-wrap"><canvas id="city-evolution"></canvas></div>
+        <p class="muted">Fonte: IBGE · Censo 2010/2022 e estimativas anuais.</p>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><span class="k-label">Beneficiários médico-hospitalar</span><span id="city-ans-total" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Cobertura sobre população</span><span id="city-ans-pct" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Operadoras ativas</span><span id="city-ops-count" class="k-val">—</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Evolução dos beneficiários</h3>
+        <div class="chart-wrap"><canvas id="city-ans-evol"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h3>Operadoras de saúde</h3>
+        <div class="table-wrap">
+          <table class="table" id="city-ops-table">
+            <thead><tr><th>Operadora</th><th>Modalidade</th><th class="num">Beneficiários</th><th class="num">%</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="muted">Fonte: ANS · mês de referência <span id="city-ans-month">—</span>. Apenas planos com cobertura médico-hospitalar (planos exclusivamente odontológicos não entram).</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Tipos de estabelecimentos — cidade vs. Porto Alegre</h3>
+          <div class="table-wrap">
+            <table class="table" id="city-types-table">
+              <thead><tr><th>Tipo</th><th class="num">Cidade</th><th class="num">Porto Alegre</th><th class="num">Δ%</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="muted">Δ% = diferença percentual da cidade em relação a Porto Alegre.</p>
+        </div>
+        <div class="card">
+          <h3>Serviços / estruturas — cidade vs. Porto Alegre</h3>
+          <div class="table-wrap">
+            <table class="table" id="city-services-table">
+              <thead><tr><th>Estrutura</th><th class="num">Cidade</th><th class="num">Porto Alegre</th><th class="num">Δ%</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="muted">Δ% = diferença percentual da cidade em relação a Porto Alegre.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Perfil da cidade</h3>
+        <div id="city-profile" class="profile"></div>
+        <p class="muted">Síntese baseada em IBGE (Censo 2022, CEMPRE) e ANS.</p>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi big"><span class="k-label">Leitos totais · cidade</span><span id="city-leitos-tot" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Leitos SUS</span><span id="city-leitos-sus" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Leitos privados</span><span id="city-leitos-priv" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">UTI total</span><span id="city-uti-tot" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Total de hospitais</span><span id="city-hosp-count" class="k-val">—</span></div>
+      </div>
+
+      <div class="kpis kpis-3">
+        <div class="kpi">
+          <span class="k-label">Habitantes por leito total</span>
+          <span id="city-habxleito-tot" class="k-val">—</span>
+          <span class="k-compare">POA: <strong id="ref-city-habxleito-tot">—</strong></span>
+        </div>
+        <div class="kpi">
+          <span class="k-label">Habitantes por leito SUS</span>
+          <span id="city-habxleito-sus" class="k-val">—</span>
+          <span class="k-compare">POA: <strong id="ref-city-habxleito-sus">—</strong></span>
+        </div>
+        <div class="kpi">
+          <span class="k-label">Beneficiários por leito privado</span>
+          <span id="city-benefxleito-priv" class="k-val">—</span>
+          <span class="k-compare">POA: <strong id="ref-city-benefxleito-priv">—</strong></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Leitos por hospital — <span class="c-name">cidade</span></h3>
+        <div class="table-wrap">
+          <table class="table" id="city-leitos-table">
+            <thead>
+              <tr>
+                <th>Hospital</th><th>Natureza</th>
+                <th class="num">SUS</th><th class="num">Privado</th><th class="num">Total</th>
+                <th class="num">UTI Total</th><th class="num">UTI SUS</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot></tfoot>
+          </table>
+        </div>
+        <p class="muted">Fonte: CNES · Leitos (OpenDataSUS).</p>
+      </div>
+
+      <div class="card">
+        <h3>Evolução dos leitos privados — <span class="c-name">cidade</span></h3>
+        <div class="chart-wrap"><canvas id="city-leitos-priv-evol"></canvas></div>
+        <p class="muted">Fonte: CNES · ElastiCNES (snapshot anual, última competência disponível).</p>
+      </div>
+
+      <div class="card">
+        <h3>Composição de renda por classe econômica</h3>
+        <div class="chart-wrap"><canvas id="city-renda"></canvas></div>
+        <p class="muted">Fonte: IBGE · Censo 2022 (agregado 10292) — pessoas de 14+ ocupadas na semana de referência, por classes de rendimento em salários mínimos.</p>
+      </div>
+
+      <div class="card iqm-card">
+        <h3>IQM — Índice de Qualidade de Mercado</h3>
+        <div class="iqm-wrap">
+          <div class="iqm-score">
+            <span id="city-iqm-value" class="iqm-val">—</span>
+            <span class="iqm-scale">/ 100</span>
+            <span id="city-iqm-tier" class="iqm-tier">—</span>
+          </div>
+          <div id="city-iqm-bars" class="iqm-bars"></div>
+        </div>
+        <p class="muted">Composto: cobertura ANS (30%), renda A+B (25%), crescimento populacional (15%), hospitais por 100k hab. (15%) e disponibilidade de leitos privados por beneficiário (15%). Comparativo: Porto Alegre.</p>
+      </div>
+
+      <div class="card">
+        <h3>Posicionamento — beneficiários, leitos e renda</h3>
+        <div class="chart-wrap"><canvas id="city-bubble"></canvas></div>
+        <p class="muted">Bolha azul = cidade pesquisada · Bolha vermelha = Porto Alegre (referência). Eixo X: beneficiários médico-hospitalares por leito privado (menor = mais leitos disponíveis). Eixo Y: CAGR (% a.a.) de beneficiários. Tamanho da bolha: % de pessoas ocupadas com rendimento ≥ 10 salários mínimos (proxy para classe A+B).</p>
+      </div>
+
+    </section>
+
+    <!-- ================= INFRAESTRUTURA ================= -->
+    <section class="tab-panel" data-panel="infra">
+
+      <div class="card">
+        <h3>3 maiores hospitais — <span class="c-name">cidade</span></h3>
+        <p class="muted">Ranking por número total de leitos (Fonte: ElastiCNES · saude.gov.br)</p>
+        <div id="top3-hospitals" class="top3"></div>
+      </div>
+
+      <div class="card">
+        <h3>Mapa — estabelecimentos de saúde</h3>
+        <div id="infra-map" class="map"></div>
+      </div>
+
+    </section>
+
+    <footer class="foot">
+      <p>Fontes: IBGE (Localidades, Censo 2022, Estimativas, CEMPRE) · DATASUS/DEMAS (CNES estabelecimentos) · ANS (PDA 024 — Informações Consolidadas de Beneficiários).</p>
+    </footer>
+
+  </section>
+
+  <div id="loader" class="loader" hidden>
+    <div class="spinner"></div>
+    <p id="loader-msg">Carregando dados…</p>
+  </div>
+
+  <div id="error" class="error" hidden></div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js?v=28"></script>
+</body>
+</html>
