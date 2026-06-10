@@ -410,9 +410,10 @@ function renderPOAReferences(ref) {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
   };
+
   const ratio = (a, b) => (a && b) ? fmt(Math.round(a / b)) : "—";
 
-  // Cidade — POA
+  // Cidade, referência POA
   const c = ref?.city;
   if (c?.leitosTotais) {
     const t = c.leitosTotais;
@@ -420,7 +421,8 @@ function renderPOAReferences(ref) {
     setRef("ref-city-habxleito-sus", ratio(c.pop, t.sus));
     setRef("ref-city-benefxleito-priv", ratio(c.ansTotal, t.privados));
   }
-  // Microrregião — POA
+
+  // Microrregião, referência POA
   const m = ref?.micro;
   if (m?.leitosTotais) {
     const t = m.leitosTotais;
@@ -428,6 +430,25 @@ function renderPOAReferences(ref) {
     setRef("ref-micro-habxleito-sus", ratio(m.pop, t.sus));
     setRef("ref-micro-benefxleito-priv", ratio(m.ansTotal, t.privados));
   }
+}
+
+function renderMedicosBeneficiariosKPI({ cidade, poa, ansCidade, ansPoaTotal }) {
+  const set = (id, value) => {
+    const node = document.getElementById(id);
+    if (node) node.textContent = value;
+  };
+
+  const ratio = (medicos, beneficiarios) => {
+    medicos = Number(medicos) || 0;
+    beneficiarios = Number(beneficiarios) || 0;
+    return beneficiarios ? (medicos / beneficiarios) * 10000 : null;
+  };
+
+  const cityVal = ratio(cidade?.total, ansCidade?.total);
+  const poaVal = ratio(poa?.total, ansPoaTotal);
+
+  set("city-medxbenef", fmt1(cityVal));
+  set("ref-city-medxbenef", fmt1(poaVal));
 }
 
 /* ===== Orchestrator ===== */
@@ -558,35 +579,44 @@ async function selectCity(ibgeId, name, uf) {
     renderTypesTable("micro", estabsMicro, estabsPOA);
     renderServicesTable("micro", estabsMicro, estabsPOA);
 
-    // City tab
-    const cityPop = popByCity[String(ibgeId)] ?? null;
-    renderCityKPIs(cityPop, area2010, densityCity, pyramidCity, censo2010);
-    renderGenderPie("city", pyramidCity);
-    renderPyramid("city", pyramidCity);
-    renderEvolution("city", evolutionCity, pyramidCity);
-    renderAnsEvolution("city", ansHistCity?.series || []);
-    renderAnsKPIs("city", ansCity, cityPop);
-    renderAnsKPIs("micro", ansMicro, Object.values(popByCity).reduce((a,b) => a + (b||0), 0));
-    renderOpsTable("city", ansCity);
-    renderMedicalDensityTable({
-      cidade: medicosCity,
-      caxias: medicosCaxias,
-      poa: medicosPOA,
-      popCidade: cityPop,
-      popCaxias: refPopByCity[CAXIAS_IBGE] || null,
-      popPoa: refPopByCity[POA_IBGE] || null,
-    });
-    renderTypesTable("city", estabsCity, estabsPOA);
-    renderServicesTable("city", estabsCity, estabsPOA);
-    renderProfile({ loc, pop: cityPop, area: area2010, pyramid: pyramidCity, censo2010, ans: ansCity, pib, cempre });
-    renderRendimentoChart(rendimento);
+// City tab
+const cityPop = popByCity[String(ibgeId)] ?? null;
+renderCityKPIs(cityPop, area2010, densityCity, pyramidCity, censo2010);
+renderGenderPie("city", pyramidCity);
+renderPyramid("city", pyramidCity);
+renderEvolution("city", evolutionCity, pyramidCity);
+renderAnsEvolution("city", ansHistCity?.series || []);
+renderAnsKPIs("city", ansCity, cityPop);
+renderAnsKPIs("micro", ansMicro, Object.values(popByCity).reduce((a,b) => a + (b||0), 0));
+renderOpsTable("city", ansCity);
 
-    // Leitos — cidade & microrregião
-    renderLeitosCity(leitosCity, cityPop, ansCity?.total || 0);
-    renderLeitosMicro(leitosMicro, Object.values(popByCity).reduce((a,b)=>a+b,0), ansMicro?.total || 0);
-    renderLeitosPrivEvolution("city", leitosHistCity?.series || []);
-    renderLeitosPrivEvolution("micro", leitosHistMicro?.series || []);
-    renderPOAReferences(poaRef);
+renderMedicalDensityTable({
+  cidade: medicosCity,
+  caxias: medicosCaxias,
+  poa: medicosPOA,
+  popCidade: cityPop,
+  popCaxias: refPopByCity[CAXIAS_IBGE] || null,
+  popPoa: refPopByCity[POA_IBGE] || null,
+});
+
+renderMedicosBeneficiariosKPI({
+  cidade: medicosCity,
+  poa: medicosPOA,
+  ansCidade: ansCity,
+  ansPoaTotal: poaRef?.city?.ansTotal || null,
+});
+
+renderTypesTable("city", estabsCity, estabsPOA);
+renderServicesTable("city", estabsCity, estabsPOA);
+renderProfile({ loc, pop: cityPop, area: area2010, pyramid: pyramidCity, censo2010, ans: ansCity, pib, cempre });
+renderRendimentoChart(rendimento);
+
+// Leitos — cidade & microrregião
+renderLeitosCity(leitosCity, cityPop, ansCity?.total || 0);
+renderLeitosMicro(leitosMicro, Object.values(popByCity).reduce((a,b)=>a+b,0), ansMicro?.total || 0);
+renderLeitosPrivEvolution("city", leitosHistCity?.series || []);
+renderLeitosPrivEvolution("micro", leitosHistMicro?.series || []);
+renderPOAReferences(poaRef);
 
     // IQM e bubble chart (assíncrono — não bloqueia o resto)
     renderIQMandBubble({
@@ -1235,6 +1265,51 @@ function medMapByCbo(data) {
   return map;
 }
 
+function medicalCareLine(label) {
+  const s = String(label || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+
+  if (
+    /CLINICO|FAMILIA|COMUNIDADE|ESTRATEGIA DE SAUDE DA FAMILIA|GERIATRA|MEDICINA DO TRABALHO/.test(s)
+  ) {
+    return "Clínica e atenção básica";
+  }
+
+  if (
+    /PEDIATRA|GINECOLOGISTA|OBSTETRA|MASTOLOGISTA/.test(s)
+  ) {
+    return "Materno-infantil e saúde da mulher";
+  }
+
+  if (
+    /CIRURGIAO|CIRURGIA|COLOPROCTOLOGISTA|UROLOGISTA|ANGIOLOGISTA|VASCULAR|ORTOPEDISTA|TRAUMATOLOGISTA/.test(s)
+  ) {
+    return "Cirúrgicas e procedimento";
+  }
+
+  if (
+    /RADIOLOGIA|DIAGNOSTICO|ANESTESIOLOGISTA|PATOLOGISTA|CITOPATOLOGISTA|ANATOMOPATOLOGISTA|ENDOSCOPIA|MEDICINA NUCLEAR|RADIOTERAPEUTA|HEMOTERAPEUTA/.test(s)
+  ) {
+    return "Diagnóstico, suporte e terapia";
+  }
+
+  if (
+    /CARDIOLOGISTA|ONCOLOGISTA|CANCEROLOGISTA|NEUROLOGISTA|NEUROCIRURGIAO|NEFROLOGISTA|HEMATOLOGISTA|ENDOCRINOLOGISTA|REUMATOLOGISTA|INFECTOLOGISTA|INTENSIVA|PNEUMOLOGISTA/.test(s)
+  ) {
+    return "Alta complexidade e doenças crônicas";
+  }
+
+  if (
+    /DERMATOLOGISTA|OFTALMOLOGISTA|OTORRINOLARINGOLOGISTA|GASTROENTEROLOGISTA|ALERGISTA|NUTROLOGISTA|ACUPUNTURISTA|HOMEOPATA|FISIATRA/.test(s)
+  ) {
+    return "Ambulatoriais especializadas";
+  }
+
+  return "Outras especialidades médicas";
+}
+
 function renderMedicalDensityTable({ cidade, caxias, poa, popCidade, popCaxias, popPoa }) {
   const tbody = $("#city-med-density-table tbody");
   if (!tbody) return;
@@ -1256,14 +1331,24 @@ function renderMedicalDensityTable({ cidade, caxias, poa, popCidade, popCaxias, 
 
   const appendRow = ({ label, medCidade, medCaxias, medPoa, bold = false }) => {
     const tr = el("tr", bold ? { class: "total-row" } : {});
+
     tr.append(
       el("td", {}, bold ? label : titleCaseMedical(label)),
       el("td", { class: "num" }, fmt(medCidade)),
       el("td", { class: "num" }, fmt1(medDensity(medCidade, popCidade))),
       el("td", { class: "num" }, fmt1(medDensity(medCaxias, popCaxias))),
-      el("td", { class: "num" }, fmt1(medDensity(medPoa, popPoa))),
+      el("td", { class: "num" }, fmt1(medDensity(medPoa, popPoa)))
     );
+
     tbody.append(tr);
+  };
+
+  const appendGroup = (label) => {
+    tbody.append(el("tr", {
+      style: "background:rgba(26,53,102,0.07);font-weight:800;color:#1a3566;"
+    },
+      el("td", { colspan: "5" }, label)
+    ));
   };
 
   appendRow({
@@ -1271,19 +1356,47 @@ function renderMedicalDensityTable({ cidade, caxias, poa, popCidade, popCaxias, 
     medCidade: cidade.total || 0,
     medCaxias: caxias?.total || 0,
     medPoa: poa?.total || 0,
-    bold: true,
+    bold: true
   });
 
-  for (const r of cidade.especialidades || []) {
-    const cx = caxiasByCbo[r.cbo];
-    const pr = poaByCbo[r.cbo];
+  const groupOrder = [
+    "Clínica e atenção básica",
+    "Materno-infantil e saúde da mulher",
+    "Cirúrgicas e procedimento",
+    "Diagnóstico, suporte e terapia",
+    "Alta complexidade e doenças crônicas",
+    "Ambulatoriais especializadas",
+    "Outras especialidades médicas"
+  ];
 
-    appendRow({
-      label: r.especialidade || r.cbo,
-      medCidade: r.medicos || 0,
-      medCaxias: cx?.medicos || 0,
-      medPoa: pr?.medicos || 0,
-    });
+  const grouped = {};
+
+  for (const r of cidade.especialidades || []) {
+    const group = medicalCareLine(r.especialidade || r.cbo);
+
+    if (!grouped[group]) grouped[group] = [];
+    grouped[group].push(r);
+  }
+
+  for (const group of groupOrder) {
+    const rows = grouped[group] || [];
+    if (!rows.length) continue;
+
+    rows.sort((a, b) => (b.medicos || 0) - (a.medicos || 0));
+
+    appendGroup(group);
+
+    for (const r of rows) {
+      const cx = caxiasByCbo[r.cbo];
+      const pr = poaByCbo[r.cbo];
+
+      appendRow({
+        label: r.especialidade || r.cbo,
+        medCidade: r.medicos || 0,
+        medCaxias: cx?.medicos || 0,
+        medPoa: pr?.medicos || 0
+      });
+    }
   }
 }
 
