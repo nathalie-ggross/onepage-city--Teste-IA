@@ -10,10 +10,12 @@ const CNES = "/proxy/cnes";
 const ANS = "/proxy/ans";
 const LEITOS = "/proxy/elastic/leitos";       // ElastiCNES (mais detalhado)
 const SERVICOS = "/proxy/elastic/servicos";   // especialidades por CNES
+const MEDICOS = "/proxy/elastic/profissionais"; // profissionais médicos por CBO/CNS
 
 // Porto Alegre — referência para comparação
 const POA_IBGE = "4314902";
 const POA_CNES = "431490";
+const CAXIAS_IBGE = "4305108";
 
 const COLORS = {
   ink: "#0b1220",
@@ -533,6 +535,15 @@ async function selectCity(ibgeId, name, uf) {
       getJSON(`${SERVICOS}?cod=${cityCod6}&cnes=${h.cnes}`).catch(() => ({ servicos: [] }))
     ));
 
+    // 7) Densidade médica via ElastiCNES — cidade selecionada + referências
+    showLoader("Carregando densidade médica (ElastiCNES)…");
+    const [refPopByCity, medicosCity, medicosCaxias, medicosPOA] = await Promise.all([
+      fetchPopByMunicipios([CAXIAS_IBGE, POA_IBGE]).catch(() => ({})),
+      getJSON(`${MEDICOS}?ibge=${String(ibgeId)}`).catch(() => null),
+      getJSON(`${MEDICOS}?ibge=${CAXIAS_IBGE}`).catch(() => null),
+      getJSON(`${MEDICOS}?ibge=${POA_IBGE}`).catch(() => null),
+    ]);
+
     // ======= RENDER =======
     // Micro tab
     renderMicroList();
@@ -557,6 +568,14 @@ async function selectCity(ibgeId, name, uf) {
     renderAnsKPIs("city", ansCity, cityPop);
     renderAnsKPIs("micro", ansMicro, Object.values(popByCity).reduce((a,b) => a + (b||0), 0));
     renderOpsTable("city", ansCity);
+    renderMedicalDensityTable({
+      cidade: medicosCity,
+      caxias: medicosCaxias,
+      poa: medicosPOA,
+      popCidade: cityPop,
+      popCaxias: refPopByCity[CAXIAS_IBGE] || null,
+      popPoa: refPopByCity[POA_IBGE] || null,
+    });
     renderTypesTable("city", estabsCity, estabsPOA);
     renderServicesTable("city", estabsCity, estabsPOA);
     renderProfile({ loc, pop: cityPop, area: area2010, pyramid: pyramidCity, censo2010, ans: ansCity, pib, cempre });
@@ -1180,6 +1199,91 @@ function renderOpsTable(scope, ansData) {
       el("td", { class: "num" }, pct(o.beneficiarios, total)),
     );
     tbody.append(tr);
+  }
+}
+
+function titleCaseMedical(label) {
+  const s = String(label || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+
+  if (!s) return "—";
+
+  return s
+    .replace(/\b\w/g, c => c.toUpperCase())
+    .replace(/\bDe\b/g, "de")
+    .replace(/\bDa\b/g, "da")
+    .replace(/\bDo\b/g, "do")
+    .replace(/\bDos\b/g, "dos")
+    .replace(/\bDas\b/g, "das")
+    .replace(/\bE\b/g, "e");
+}
+
+function medDensity(medicos, pop) {
+  medicos = Number(medicos) || 0;
+  pop = Number(pop) || 0;
+  return pop ? (medicos / pop) * 10000 : null;
+}
+
+function medMapByCbo(data) {
+  const map = {};
+  for (const r of data?.especialidades || []) {
+    if (!r.cbo) continue;
+    map[r.cbo] = r;
+  }
+  return map;
+}
+
+function renderMedicalDensityTable({ cidade, caxias, poa, popCidade, popCaxias, popPoa }) {
+  const tbody = $("#city-med-density-table tbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  const compEl = $("#city-med-density-comp");
+  if (compEl) compEl.textContent = cidade?.comp || caxias?.comp || poa?.comp || "—";
+
+  if (!cidade || !Array.isArray(cidade.especialidades)) {
+    tbody.append(el("tr", {},
+      el("td", { colspan: "5", class: "muted" }, "Dados de médicos não disponíveis para esta cidade.")
+    ));
+    return;
+  }
+
+  const caxiasByCbo = medMapByCbo(caxias);
+  const poaByCbo = medMapByCbo(poa);
+
+  const appendRow = ({ label, medCidade, medCaxias, medPoa, bold = false }) => {
+    const tr = el("tr", bold ? { class: "total-row" } : {});
+    tr.append(
+      el("td", {}, bold ? label : titleCaseMedical(label)),
+      el("td", { class: "num" }, fmt(medCidade)),
+      el("td", { class: "num" }, fmt1(medDensity(medCidade, popCidade))),
+      el("td", { class: "num" }, fmt1(medDensity(medCaxias, popCaxias))),
+      el("td", { class: "num" }, fmt1(medDensity(medPoa, popPoa))),
+    );
+    tbody.append(tr);
+  };
+
+  appendRow({
+    label: "TOTAL DE MÉDICOS",
+    medCidade: cidade.total || 0,
+    medCaxias: caxias?.total || 0,
+    medPoa: poa?.total || 0,
+    bold: true,
+  });
+
+  for (const r of cidade.especialidades || []) {
+    const cx = caxiasByCbo[r.cbo];
+    const pr = poaByCbo[r.cbo];
+
+    appendRow({
+      label: r.especialidade || r.cbo,
+      medCidade: r.medicos || 0,
+      medCaxias: cx?.medicos || 0,
+      medPoa: pr?.medicos || 0,
+    });
   }
 }
 
