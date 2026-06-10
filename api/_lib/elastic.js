@@ -16,18 +16,22 @@ export async function elasticSearch(index, body) {
   return r.json();
 }
 
-export async function elasticLatestComp(prefix = "cnes-leitosh") {
+export async function elasticLatestComp(prefix = "cnes-leitosh", lookbackMonths = 6) {
   const today = new Date();
-  for (let i = 0; i < 6; i++) {
+
+  for (let i = 0; i < lookbackMonths; i++) {
     const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
     const ym = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`;
+
     try {
       const r = await elasticSearch(`${prefix}-${ym}`, { size: 0 });
       const tot = r?.rawResponse?.hits?.total;
       const v = typeof tot === "object" ? tot.value : tot;
+
       if (v && v > 0) return ym;
     } catch {}
   }
+
   return null;
 }
 
@@ -273,4 +277,103 @@ export async function servicosPorHospital(cnes, comp) {
   } catch (e) {
     return { comp, servicos: [], error: String(e.message || e) };
   }
+}
+function onlyDigits(value) {
+
+  return String(value || "").replace(/\D/g, "");
+}
+
+function ibgeCandidates(codIbge) {
+  const full = onlyDigits(codIbge);
+  if (!full) return [];
+
+  const arr = [full];
+
+  // Algumas bases CNES usam código municipal com 6 dígitos.
+  // O IBGE oficial de município tem 7 dígitos.
+  if (full.length === 7) arr.push(full.slice(0, 6));
+
+  return [...new Set(arr)];
+}
+
+function cleanCboLabel(cbo) {
+  const raw = String(cbo || "").trim();
+  if (!raw) return "";
+
+  // Exemplo: "225125 - MEDICO CLINICO" -> "MEDICO CLINICO"
+  return raw.replace(/^\d+\s*-\s*/, "").trim() || raw;
+}
+
+// Retorna médicos únicos por CNS, agrupados por CBO, para uma cidade.
+// Fonte: índice cnes-profissionais-YYYYMM do ElastiCNES.
+//
+// Regra usada:
+// 1) filtra município por ibge.keyword
+// 2) filtra médicos por CBO iniciado em 225
+// 3) deduplica profissionais por profissional_cns.keyword
+// 4) agrupa por profissional_cbo.keyword
+export async function medicosPorCidade(codIbge, comp) {
+  const cods = ibgeCandidates(codIbge);
+  if (!cods.length) throw new Error("código IBGE inválido");
+
+  comp = comp || (await elasticLatestComp("cnes-profissionais", 18));
+  if (!comp) throw new Error("sem competência disponível para profissionais");
+
+  const body = {
+    size: 0,
+    query: {
+      bool: {
+        filter: [
+          { terms: { "ibge.keyword": cods } },
+          { wildcard: { "profissional_cbo.keyword": "225*" } },
+        ],
+      },
+    },
+    aggs: {
+      total_medicos: {
+        cardinality: {
+          field: "profissional_cns.keyword",
+          precision_threshold: 40000,
+        },
+      },
+      por_especialidade: {
+        terms: {
+          field: "profissional_cbo.keyword",
+          size: 300,
+          order: { medicos_unicos: "desc" },
+        },
+        aggs: {
+          medicos_unicos: {
+            cardinality: {
+              field: "profissional_cns.keyword",
+              precision_threshold: 40000,
+            },
+          },
+        },
+      },
+    },
+  };
+
+  const r = await elasticSearch(`cnes-profissionais-${comp}`, body);
+  const aggs = r?.rawResponse?.aggregations || {};
+  const buckets = aggs?.por_especialidade?.buckets || [];
+
+  const especialidades = buckets
+    .map((b) => ({
+      cbo: String(b.key || "").trim(),
+      especialidade: cleanCboLabel(b.key),
+      medicos: Math.round(Number(b?.medicos_unicos?.value || 0)),
+      vinculos: Number(b?.doc_count || 0),
+    }))
+    .filter((r) => r.cbo && r.medicos > 0)
+    .sort((a, b) => b.medicos - a.medicos);
+
+  const total = Math.round(Number(aggs?.total_medicos?.value || 0));
+
+  return {
+    comp,
+    ibge: cods[0],
+    total,
+    especialidades,
+  };
 }
