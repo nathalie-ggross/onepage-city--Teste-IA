@@ -263,6 +263,28 @@
         <p class="muted">Fonte: ANS · mês de referência <span id="city-ans-month">—</span>. Apenas planos com cobertura médico-hospitalar (planos exclusivamente odontológicos não entram).</p>
       </div>
 
+<div class="card">
+  <h3>Densidade médica por especialidade — <span class="c-name">cidade</span></h3>
+  <div class="table-wrap">
+    <table class="table" id="city-med-density-table">
+      <thead>
+        <tr>
+          <th>Especialidade médica</th>
+          <th class="num">Nº médicos</th>
+          <th class="num">Médicos / 10 mil hab.</th>
+          <th class="num">REF Caxias do Sul</th>
+          <th class="num">REF POA</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="muted">
+    Fonte: ElastiCNES/CNES · competência <span id="city-med-density-comp">—</span>.
+    Médicos únicos deduplicados por CNS. Referências calculadas com a mesma regra para Caxias do Sul e Porto Alegre.
+  </p>
+</div>
+      
       <div class="grid-2">
         <div class="card">
           <h3>Tipos de estabelecimentos — cidade vs. Porto Alegre</h3>
@@ -402,6 +424,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?v=28"></script>
+<script src="app.js?v=29"></script>
 </body>
 </html>
