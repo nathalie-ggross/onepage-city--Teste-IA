@@ -619,19 +619,20 @@ renderLeitosPrivEvolution("micro", leitosHistMicro?.series || []);
 renderPOAReferences(poaRef);
 
     // IQM e bubble chart (assíncrono — não bloqueia o resto)
-    renderIQMandBubble({
-      cityIbge: String(ibgeId),
-      cityName: loc.nome,
-      cityUF: ufSigla,
-      cityPop, censo2010,
-      cityLeitos: leitosCity,
-      cityAns: ansCity,
-      cityAnsHist: ansHistCity?.series || [],
-      cityRendimento: rendimento,
-      estabsCity,
-      popByCity,
-      poaRef,
-    });
+renderIQMandBubble({
+  cityIbge: String(ibgeId),
+  cityName: loc.nome,
+  cityUF: ufSigla,
+  cityPop, censo2010,
+  cityLeitos: leitosCity,
+  cityAns: ansCity,
+  cityAnsHist: ansHistCity?.series || [],
+  cityRendimento: rendimento,
+  estabsCity,
+  popByCity,
+  leitosMicro,
+  poaRef,
+});
 
     // Infra tab
     renderInfraMap(estabsCity);
@@ -1933,11 +1934,196 @@ function tierIQM(score) {
   return "incipiente";
 }
 
+async function mapInChunks(items, size, fn) {
+  const out = [];
+
+  for (let i = 0; i < items.length; i += size) {
+    const chunk = items.slice(i, i + size);
+    const res = await Promise.all(chunk.map(fn));
+    out.push(...res);
+  }
+
+  return out;
+}
+
+async function fetchAnsMHByMunicipios(uf, ids) {
+  const out = {};
+
+  await mapInChunks(ids, 6, async (id) => {
+    const cod6 = String(id).slice(0, 6);
+
+    try {
+      const raw = await getJSON(`${ANS}?uf=${uf}&cod=${cod6}`);
+      out[String(id)] = ansMHOnly(raw);
+    } catch {
+      out[String(id)] = null;
+    }
+  });
+
+  return out;
+}
+
+async function fetchPIBByMunicipios(ids) {
+  const out = {};
+
+  await mapInChunks(ids, 6, async (id) => {
+    try {
+      out[String(id)] = await fetchPIB(String(id));
+    } catch {
+      out[String(id)] = null;
+    }
+  });
+
+  return out;
+}
+
+function privateBedsByCityFromLeitosMicro(leitosMicro) {
+  const out = {};
+
+  for (const h of leitosMicro?.hospitais || []) {
+    const cod6 = String(h.cod_ibge || "").slice(0, 6);
+    if (!cod6) continue;
+
+    out[cod6] = (out[cod6] || 0) + Number(h.leitos_privados_total || 0);
+  }
+
+  return out;
+}
+
+function pibRawValue(pib) {
+  return Number(pib?.pib || 0);
+}
+
+function buildBubblePoint({ id, label, kind, pop, ansTotal, privados, pib }) {
+  pop = Number(pop) || 0;
+  ansTotal = Number(ansTotal) || 0;
+  privados = Number(privados) || 0;
+
+  if (!pop || !privados) return null;
+
+  const x = ansTotal / privados;
+  const y = (ansTotal / pop) * 100;
+  const pibValue = pibRawValue(pib);
+
+  return {
+    id: String(id),
+    label,
+    kind,
+    x,
+    y,
+    pib: pibValue,
+    r: 8
+  };
+}
+
+async function buildRegionalBubblePoints({
+  cityIbge,
+  cityUF,
+  popByCity,
+  leitosMicro,
+  cityLeitos,
+  cityAns,
+  poaRef
+}) {
+  const microIds = state.micro.municipios.map(m => String(m.id));
+  const cityCod6 = String(cityIbge).slice(0, 6);
+
+  const [ansByCity, pibByCity, refPopByCity, ansCaxiasRaw, leitosCaxias, pibCaxias, pibPOA] = await Promise.all([
+    fetchAnsMHByMunicipios(cityUF, microIds).catch(() => ({})),
+    fetchPIBByMunicipios(microIds).catch(() => ({})),
+    fetchPopByMunicipios([CAXIAS_IBGE, POA_IBGE]).catch(() => ({})),
+    getJSON(`${ANS}?uf=RS&cod=${String(CAXIAS_IBGE).slice(0, 6)}`).catch(() => null),
+    getJSON(`${LEITOS}?cod=${String(CAXIAS_IBGE).slice(0, 6)}`).catch(() => null),
+    fetchPIB(CAXIAS_IBGE).catch(() => null),
+    fetchPIB(POA_IBGE).catch(() => null),
+  ]);
+
+  const privadosByCod6 = privateBedsByCityFromLeitosMicro(leitosMicro);
+
+  if (cityLeitos?.totais?.privados != null) {
+    privadosByCod6[cityCod6] = Number(cityLeitos.totais.privados || 0);
+  }
+
+  const pointsById = {};
+
+  for (const m of state.micro.municipios) {
+    const id = String(m.id);
+    const cod6 = id.slice(0, 6);
+    const ans = ansByCity[id];
+
+    let kind = "micro";
+    if (id === String(cityIbge)) kind = "current";
+    else if (id === POA_IBGE) kind = "poa";
+    else if (id === CAXIAS_IBGE) kind = "caxias";
+
+    const p = buildBubblePoint({
+      id,
+      label: m.nome,
+      kind,
+      pop: popByCity[id],
+      ansTotal: ans?.total || 0,
+      privados: privadosByCod6[cod6] || 0,
+      pib: pibByCity[id],
+    });
+
+    if (p) pointsById[id] = p;
+  }
+
+  const caxiasAns = ansMHOnly(ansCaxiasRaw);
+
+  const caxiasPoint = buildBubblePoint({
+    id: CAXIAS_IBGE,
+    label: "Caxias do Sul",
+    kind: CAXIAS_IBGE === String(cityIbge) ? "current" : "caxias",
+    pop: refPopByCity[CAXIAS_IBGE],
+    ansTotal: caxiasAns?.total || 0,
+    privados: leitosCaxias?.totais?.privados || 0,
+    pib: pibCaxias,
+  });
+
+  if (caxiasPoint && !pointsById[CAXIAS_IBGE]) {
+    pointsById[CAXIAS_IBGE] = caxiasPoint;
+  }
+
+  const poaPoint = buildBubblePoint({
+    id: POA_IBGE,
+    label: "Porto Alegre",
+    kind: POA_IBGE === String(cityIbge) ? "current" : "poa",
+    pop: poaRef?.city?.pop || refPopByCity[POA_IBGE],
+    ansTotal: poaRef?.city?.ansTotal || 0,
+    privados: poaRef?.city?.leitosTotais?.privados || 0,
+    pib: pibPOA,
+  });
+
+  if (poaPoint && !pointsById[POA_IBGE]) {
+    pointsById[POA_IBGE] = poaPoint;
+  }
+
+  const points = Object.values(pointsById);
+
+  const maxPib = Math.max(...points.map(p => p.pib || 0), 1);
+
+  for (const p of points) {
+    p.r = 7 + Math.sqrt((p.pib || 0) / maxPib) * 25;
+  }
+
+  const rank = {
+    micro: 1,
+    caxias: 2,
+    poa: 3,
+    current: 4,
+  };
+
+  points.sort((a, b) => (rank[a.kind] || 0) - (rank[b.kind] || 0));
+
+  return points;
+}
+
 async function renderIQMandBubble(ctx) {
   const {
     cityIbge, cityName, cityUF, cityPop, censo2010,
     cityLeitos, cityAns, cityAnsHist, cityRendimento,
-    estabsCity, popByCity, poaRef,
+    estabsCity, popByCity, leitosMicro, poaRef,
   } = ctx;
 
   // 1) Métricas para cidade-alvo (já temos tudo)
@@ -2012,81 +2198,117 @@ async function renderIQMandBubble(ctx) {
     bars.append(row);
   }
 
-  // 4) Bubble chart — APENAS cidade pesquisada + Porto Alegre como referência.
-  //    (Antes mostrávamos peers da microrregião, mas isso poluía a visualização.)
-  const points = [];
-  if (cityMetrics.benefPerLeitoPriv) {
-    points.push({
-      label: cityName,
-      x: cityMetrics.benefPerLeitoPriv,
-      y: cagrFromAnsSeries(cityAnsHist) ?? 0,
-      r: Math.max(10, cityMetrics.rendaAB * 100),
-      kind: "current",
+  // 4) Bubble chart regional
+  // Pontos = municípios da microrregião
+  // X = beneficiários médico-hospitalares por leito privado
+  // Y = taxa de cobertura ANS
+  // Tamanho = PIB municipal
+  try {
+    const points = await buildRegionalBubblePoints({
+      cityIbge,
+      cityUF,
+      popByCity,
+      leitosMicro,
+      cityLeitos,
+      cityAns,
+      poaRef,
     });
-  }
-  // POA como referência (se não for a própria cidade pesquisada)
-  if (cityIbge !== POA_IBGE && poaMetrics?.benefPerLeitoPriv && poaMetrics?._cagrAns != null) {
-    points.push({
-      label: "Porto Alegre (referência)",
-      x: poaMetrics.benefPerLeitoPriv,
-      y: poaMetrics._cagrAns,
-      r: Math.max(10, poaMetrics.rendaAB * 100),
-      kind: "poa",
-    });
-  }
 
-  renderBubbleChart(points);
+    renderBubbleChart(points);
+  } catch (e) {
+    console.warn("Falha ao montar benchmark regional:", e);
+    renderBubbleChart([]);
+  }
 }
 
 function renderBubbleChart(points) {
   const key = "city-bubble";
   destroyChart(key);
+
   const canvas = $(`#${key}`);
   if (!canvas) return;
+
   if (!points || !points.length) {
     canvas.parentElement.innerHTML =
-      `<p class="muted">Dados insuficientes para o gráfico de posicionamento (precisa de beneficiários ANS, leitos privados e renda — disponível primariamente para municípios do RS).</p>`;
+      `<p class="muted">Dados insuficientes para o benchmark regional. É necessário haver beneficiários ANS, leitos privados e PIB municipal.</p>`;
     return;
   }
-  const colorFor = k => k === "current" ? "#1a3566" : k === "poa" ? "#d94a4a" : "#8a93a3";
+
+  const colorFor = (kind) => {
+    if (kind === "current") return "#1a3566";
+    if (kind === "poa") return "#d94a4a";
+    if (kind === "caxias") return "#2e8b57";
+    return "#8a93a3";
+  };
+
+  const labelForKind = (kind) => {
+    if (kind === "current") return "Cidade pesquisada";
+    if (kind === "poa") return "Porto Alegre";
+    if (kind === "caxias") return "Caxias do Sul";
+    return "Município da microrregião";
+  };
+
   const ds = {
     label: "Municípios",
-    data: points.map(p => ({ x: p.x, y: p.y, r: p.r, label: p.label, kind: p.kind })),
+    data: points.map(p => ({
+      x: p.x,
+      y: p.y,
+      r: p.r,
+      label: p.label,
+      kind: p.kind,
+      pib: p.pib,
+    })),
     backgroundColor: points.map(p => colorFor(p.kind) + "cc"),
     borderColor: points.map(p => colorFor(p.kind)),
-    borderWidth: 2,
+    borderWidth: points.map(p => p.kind === "micro" ? 1.5 : 2.5),
   };
+
   state.charts[key] = new Chart(canvas, {
     type: "bubble",
-    data: { datasets: [ds] },
+    data: {
+      datasets: [ds],
+    },
     options: {
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: false,
+        },
         tooltip: {
           callbacks: {
             label: c => {
               const p = c.raw;
+              const pibMi = p.pib ? p.pib / 1000 : null;
+
               return [
-                `${p.label}`,
-                `Benef. por leito privado: ${fmt(Math.round(p.x))}`,
-                `CAGR benef.: ${p.y >= 0 ? "+" : ""}${p.y.toFixed(1)}% a.a.`,
-                `Tamanho ∝ % renda A+B`,
+                `${p.label} · ${labelForKind(p.kind)}`,
+                `Benef. por leito privado: ${fmt1(p.x)}`,
+                `Cobertura ANS: ${fmt1(p.y)}%`,
+                `PIB: ${pibMi ? "R$ " + fmt1(pibMi) + " mi" : "—"}`,
               ];
             },
           },
         },
-        // Plugin custom para anotar cada bolha com o nome
         bubbleLabels: { show: true },
       },
       scales: {
         x: {
-          title: { display: true, text: "Beneficiários médico-hospitalares por leito privado (menor = mais leitos disponíveis)" },
-          ticks: { callback: v => fmt(v) },
+          title: {
+            display: true,
+            text: "Beneficiários médico-hospitalares por leito privado (maior = maior pressão)",
+          },
+          ticks: {
+            callback: v => fmt(v),
+          },
         },
         y: {
-          title: { display: true, text: "CAGR de beneficiários (% a.a.)" },
-          ticks: { callback: v => `${v >= 0 ? "+" : ""}${v.toFixed(1)}%` },
+          title: {
+            display: true,
+            text: "Taxa de cobertura de planos de saúde (% da população)",
+          },
+          ticks: {
+            callback: v => `${fmt1(v)}%`,
+          },
         },
       },
     },
@@ -2094,19 +2316,29 @@ function renderBubbleChart(points) {
       id: "bubbleLabels",
       afterDatasetsDraw(chart, _args, opts) {
         if (!opts || !opts.show) return;
+
         const { ctx } = chart;
         ctx.save();
-        ctx.font = "600 10.5px -apple-system, 'Inter', Helvetica, Arial, sans-serif";
+
+        ctx.font = "700 10.5px -apple-system, 'Inter', Helvetica, Arial, sans-serif";
         ctx.fillStyle = "#0b1220";
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
+
         const meta = chart.getDatasetMeta(0);
+
         meta.data.forEach((elem, i) => {
           const p = chart.data.datasets[0].data[i];
           if (!p) return;
+
+          if (p.kind === "micro" && chart.data.datasets[0].data.length > 12) return;
+
           const pos = elem.tooltipPosition ? elem.tooltipPosition() : { x: elem.x, y: elem.y };
-          ctx.fillText(p.label, pos.x, pos.y + (p.r || 6) + 2);
+          const dy = (p.r || 6) + 3;
+
+          ctx.fillText(p.label, pos.x, pos.y + dy);
         });
+
         ctx.restore();
       },
     }],
