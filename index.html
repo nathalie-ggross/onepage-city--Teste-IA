@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <title>One Page — Pesquisa de Cidades</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="style.css?v=26">
+<link rel="stylesheet" href="style.css?v=30">
 </head>
 <body>
 
@@ -23,7 +23,8 @@
     <input id="search" type="search" placeholder="Digite o nome de uma cidade…" autocomplete="off">
     <ul id="suggestions" class="suggestions" hidden></ul>
   </div>
-  <button id="print-btn" class="btn-ghost">Imprimir</button>
+  <button id="print-exec-btn" class="btn-ghost">PDF executivo</button>
+  <button id="print-detail-btn" class="btn-ghost">PDF detalhado</button>
 </header>
 
 <main id="main">
@@ -97,16 +98,17 @@
       </div>
 
       <div class="grid-2">
-        <div class="card">
-          <h3>População por gênero — microrregião</h3>
-          <div class="chart-wrap small"><canvas id="micro-gender"></canvas></div>
-          <div id="micro-gender-legend" class="legend"></div>
-        </div>
-        <div class="card">
-          <h3>Pirâmide etária — microrregião</h3>
-          <div class="chart-wrap"><canvas id="micro-pyramid"></canvas></div>
-        </div>
-      </div>
+  <div class="card exec-hide">
+    <h3>População por gênero — microrregião</h3>
+    <div class="chart-wrap small"><canvas id="micro-gender"></canvas></div>
+    <div id="micro-gender-legend" class="legend"></div>
+  </div>
+
+  <div class="card exec-hide">
+    <h3>Pirâmide etária — microrregião</h3>
+    <div class="chart-wrap"><canvas id="micro-pyramid"></canvas></div>
+  </div>
+</div>
 
       <div class="card">
         <h3>Evolução populacional — microrregião</h3>
@@ -224,16 +226,17 @@
       </div>
 
       <div class="grid-2">
-        <div class="card">
-          <h3>População por gênero</h3>
-          <div class="chart-wrap small"><canvas id="city-gender"></canvas></div>
-          <div id="city-gender-legend" class="legend"></div>
-        </div>
-        <div class="card">
-          <h3>Pirâmide etária</h3>
-          <div class="chart-wrap"><canvas id="city-pyramid"></canvas></div>
-        </div>
-      </div>
+  <div class="card exec-hide">
+    <h3>População por gênero — cidade</h3>
+    <div class="chart-wrap small"><canvas id="city-gender"></canvas></div>
+    <div id="city-gender-legend" class="legend"></div>
+  </div>
+
+  <div class="card exec-hide">
+    <h3>Pirâmide etária — cidade</h3>
+    <div class="chart-wrap"><canvas id="city-pyramid"></canvas></div>
+  </div>
+</div>
 
       <div class="card">
         <h3>Evolução populacional</h3>
@@ -263,7 +266,7 @@
         <p class="muted">Fonte: ANS · mês de referência <span id="city-ans-month">—</span>. Apenas planos com cobertura médico-hospitalar (planos exclusivamente odontológicos não entram).</p>
       </div>
 
-<div class="card">
+<div class="card exec-hide">
   <h3>Densidade médica por especialidade — <span class="c-name">cidade</span></h3>
   <div class="table-wrap">
     <table class="table" id="city-med-density-table">
@@ -453,6 +456,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?v=36"></script>
+<script src="app.js?v=37"></script>
 </body>
 </html>
