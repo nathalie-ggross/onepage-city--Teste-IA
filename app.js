@@ -16,6 +16,7 @@ const MEDICOS = "/proxy/elastic/profissionais"; // profissionais médicos por CB
 const POA_IBGE = "4314902";
 const POA_CNES = "431490";
 const CAXIAS_IBGE = "4305108";
+const CAXIAS_CNES = "430510";
 
 const COLORS = {
   ink: "#0b1220",
@@ -78,6 +79,7 @@ const state = {
   micro: { id: null, nome: null, municipios: [] },
   establishments: [],
   estabsPOA: [],
+  estabsCaxias: [],
   estabsMicro: [],
   charts: {},
   maps: {},
@@ -518,12 +520,15 @@ async function selectCity(ibgeId, name, uf) {
     const estabsCity = await fetchEstablishmentsByCity(String(ibgeId).slice(0, 6));
     state.establishments = estabsCity;
     // POA em paralelo com a microrregião agregada
-    const [estabsPOA, estabsMicro] = await Promise.all([
-      String(ibgeId) === POA_IBGE ? Promise.resolve(estabsCity) : fetchEstablishmentsByCity(POA_CNES),
-      fetchEstablishmentsByMicro(microIds.map(i => i.slice(0, 6))),
-    ]);
-    state.estabsPOA = estabsPOA;
-    state.estabsMicro = estabsMicro;
+const [estabsPOA, estabsCaxias, estabsMicro] = await Promise.all([
+  String(ibgeId) === POA_IBGE ? Promise.resolve(estabsCity) : fetchEstablishmentsByCity(POA_CNES),
+  String(ibgeId) === CAXIAS_IBGE ? Promise.resolve(estabsCity) : fetchEstablishmentsByCity(CAXIAS_CNES),
+  fetchEstablishmentsByMicro(microIds.map(i => i.slice(0, 6))),
+]);
+
+state.estabsPOA = estabsPOA;
+state.estabsCaxias = estabsCaxias;
+state.estabsMicro = estabsMicro;
 
     // 5) ANS — só médico-hospitalar
     showLoader("Carregando saúde suplementar (ANS)…");
@@ -606,8 +611,8 @@ renderMedicosBeneficiariosKPI({
   ansPoaTotal: poaRef?.city?.ansTotal || null,
 });
 
-renderTypesTable("city", estabsCity, estabsPOA);
-renderServicesTable("city", estabsCity, estabsPOA);
+renderTypesTable("city", estabsCity, estabsPOA, estabsCaxias);
+renderServicesTable("city", estabsCity, estabsPOA, estabsCaxias);
 renderProfile({ loc, pop: cityPop, area: area2010, pyramid: pyramidCity, censo2010, ans: ansCity, pib, cempre });
 renderRendimentoChart(rendimento);
 
@@ -1401,31 +1406,59 @@ function renderMedicalDensityTable({ cidade, caxias, poa, popCidade, popCaxias, 
   }
 }
 
-function renderTypesTable(scope, estabsTarget, estabsPOA) {
+function renderTypesTable(scope, estabsTarget, estabsPOA, estabsCaxias = null) {
   const tbody = $(`#${scope}-types-table tbody`);
   tbody.innerHTML = "";
+
   const countBy = list => {
     const c = {};
-    for (const e of list) { const t = TIPO_UNIDADE_MAP[e.codigo_tipo_unidade] || `Tipo ${e.codigo_tipo_unidade ?? "N/I"}`; c[t] = (c[t] || 0) + 1; }
+    for (const e of list || []) {
+      const t = TIPO_UNIDADE_MAP[e.codigo_tipo_unidade] || `Tipo ${e.codigo_tipo_unidade ?? "N/I"}`;
+      c[t] = (c[t] || 0) + 1;
+    }
     return c;
   };
-  const cT = countBy(estabsTarget), cP = countBy(estabsPOA);
-  // Mostra apenas onde a cidade alvo tem pelo menos 1 (ignora zerados)
-  const rows = Array.from(new Set([...Object.keys(cT), ...Object.keys(cP)]))
-    .filter(name => (cT[name] || 0) > 0);
-  rows.sort((a, b) => (cT[b]||0) - (cT[a]||0));
+
+  const cT = countBy(estabsTarget);
+  const cP = countBy(estabsPOA);
+  const cC = estabsCaxias ? countBy(estabsCaxias) : null;
+
+  const rows = Array.from(new Set([
+    ...Object.keys(cT),
+    ...Object.keys(cP),
+    ...(cC ? Object.keys(cC) : []),
+  ])).filter(name => (cT[name] || 0) > 0);
+
+  rows.sort((a, b) => (cT[b] || 0) - (cT[a] || 0));
+
   for (const name of rows) {
-    const t = cT[name] || 0, p = cP[name] || 0;
-    tbody.append(el("tr", {},
-      el("td", {}, name),
-      el("td", { class: "num" }, fmt(t)),
-      el("td", { class: "num" }, fmt(p)),
-      el("td", { class: "num" + diffClass(t, p) }, diffPct(t, p)),
-    ));
+    const t = cT[name] || 0;
+    const p = cP[name] || 0;
+
+    if (cC) {
+      const cx = cC[name] || 0;
+
+      tbody.append(el("tr", {},
+        el("td", {}, name),
+        el("td", { class: "num" }, fmt(t)),
+        el("td", { class: "num" }, fmt(cx)),
+        el("td", { class: "num" }, fmt(p)),
+        el("td", { class: "num" + diffClass(t, cx) }, diffPct(t, cx)),
+      ));
+    } else {
+      tbody.append(el("tr", {},
+        el("td", {}, name),
+        el("td", { class: "num" }, fmt(t)),
+        el("td", { class: "num" }, fmt(p)),
+        el("td", { class: "num" + diffClass(t, p) }, diffPct(t, p)),
+      ));
+    }
   }
 }
 
-/* Δ% formatter — diferença relativa de v vs ref (Porto Alegre).
+/* Δ% formatter — diferença relativa de v vs referência.
+ * (v - ref) / ref. Mostra "—" quando ref ausente; "+∞" se v>0 e ref=0; "0%" se ambos = 0.
+ */
  * (v - ref) / ref. Mostra "—" quando ref ausente; "+∞" se v>0 e ref=0; "0%" se ambos = 0.
  */
 function diffPct(v, ref) {
@@ -1443,14 +1476,14 @@ function diffClass(v, ref) {
   return d > 0 ? " diff-pos" : d < 0 ? " diff-neg" : "";
 }
 
-function renderServicesTable(scope, estabsTarget, estabsPOA) {
+function renderServicesTable(scope, estabsTarget, estabsPOA, estabsCaxias = null) {
   const tbody = $(`#${scope}-services-table tbody`);
   tbody.innerHTML = "";
-  // Filtros de "Não SUS": estabelecimentos privados que NÃO atendem SUS
-  // (combinação de esfera privada + flag de atendimento ambulatorial = "NAO" ou ausente).
+
   const isNaoSus = e =>
     e.descricao_esfera_administrativa === "PRIVADA" &&
     e.estabelecimento_faz_atendimento_ambulatorial_sus !== "SIM";
+
   const isSusActive = e =>
     e.estabelecimento_faz_atendimento_ambulatorial_sus === "SIM";
 
@@ -1472,16 +1505,32 @@ function renderServicesTable(scope, estabsTarget, estabsPOA) {
     ["Esfera estadual", e => e.descricao_esfera_administrativa === "ESTADUAL"],
     ["Esfera federal", e => e.descricao_esfera_administrativa === "FEDERAL"],
   ];
+
   for (const [label, fn] of flags) {
-    const nT = estabsTarget.filter(fn).length;
-    const nP = estabsPOA.filter(fn).length;
-    if (nT === 0 && nP === 0) continue;
-    tbody.append(el("tr", {},
-      el("td", {}, label),
-      el("td", { class: "num" }, fmt(nT)),
-      el("td", { class: "num" }, fmt(nP)),
-      el("td", { class: "num" + diffClass(nT, nP) }, diffPct(nT, nP)),
-    ));
+    const nT = (estabsTarget || []).filter(fn).length;
+    const nP = (estabsPOA || []).filter(fn).length;
+    const nC = estabsCaxias ? (estabsCaxias || []).filter(fn).length : null;
+
+    if (estabsCaxias) {
+      if (nT === 0 && nP === 0 && nC === 0) continue;
+
+      tbody.append(el("tr", {},
+        el("td", {}, label),
+        el("td", { class: "num" }, fmt(nT)),
+        el("td", { class: "num" }, fmt(nC)),
+        el("td", { class: "num" }, fmt(nP)),
+        el("td", { class: "num" + diffClass(nT, nC) }, diffPct(nT, nC)),
+      ));
+    } else {
+      if (nT === 0 && nP === 0) continue;
+
+      tbody.append(el("tr", {},
+        el("td", {}, label),
+        el("td", { class: "num" }, fmt(nT)),
+        el("td", { class: "num" }, fmt(nP)),
+        el("td", { class: "num" + diffClass(nT, nP) }, diffPct(nT, nP)),
+      ));
+    }
   }
 }
 
