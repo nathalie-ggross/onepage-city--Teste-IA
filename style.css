@@ -400,188 +400,6 @@ body {
   .topbar { flex-wrap: wrap; }
 }
 
-@media print {
-  @page { size: A4 portrait; margin: 10mm; }
-
-  /* Força fundos/cores a imprimirem */
-  *, *::before, *::after {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    color-adjust: exact !important;
-  }
-
-  html, body { background: #fff !important; }
-  .topbar, .tabs, .mini-search, .loader, .suggestions, .hero-actions,
-  .card.pending { display: none !important; }
-
-  .dashboard { max-width: none; margin: 0; padding: 0; gap: 6px; }
-  .hero { page-break-after: avoid; margin-bottom: 4px; }
-
-  /* Imprime TODAS as abas, uma por página */
-  .tab-panel { display: flex !important; page-break-before: always; gap: 6px; }
-  .tab-panel[data-panel="micro"] { page-break-before: avoid; }
-  .tab-panel[data-panel="micro"]::before  { content: "MICRORREGIÃO"; }
-  .tab-panel[data-panel="cidade"]::before { content: "CIDADE"; }
-  .tab-panel[data-panel="infra"]::before  { content: "INFRAESTRUTURA"; }
-  .tab-panel::before {
-    display: block; font-size: 13px; font-weight: 800; color: #1a3566;
-    letter-spacing: 2px; border-bottom: 2px solid #1a3566;
-    padding: 0 0 3px; margin: 0 0 6px;
-  }
-
-  /* Evita quebra dentro de elementos importantes */
-  .card, .kpi, .hospital, .top3-hospital, .insight, .profile .line,
-  .chart-wrap, .map, .map-sm, .table tr {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-  .card {
-    box-shadow: none !important;
-    border: 1px solid #c5cbd6 !important;
-    padding: 8px 10px !important;
-    margin: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow: visible !important;
-  }
-  .card h3 {
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-  .table thead { display: table-header-group; }
-  .table tfoot { display: table-footer-group; }
-
-  /* Charts — alturas fixas menores p/ A4 */
-  .chart-wrap {
-    height: 200px !important;
-    position: relative !important;
-    display: block !important;
-    max-width: 100% !important;
-  }
-  .chart-wrap.small {
-    height: 150px !important;
-    max-width: 240px !important;
-    margin: 0 auto !important;
-  }
-  /* Cards com pizza pequeno: replicar a centralização vertical da tela
-     (flex column + auto margins). Evita gráfico colado no topo quando
-     o grid-2 estica o card pela altura da pirâmide ao lado. */
-  .card:has(> .chart-wrap.small) {
-    display: flex !important;
-    flex-direction: column !important;
-  }
-  .card:has(> .chart-wrap.small) > .chart-wrap.small {
-    margin-top: auto !important;
-  }
-  .card:has(> .chart-wrap.small) > .legend {
-    margin-bottom: auto !important;
-    font-size: 10px !important;
-    gap: 8px !important;
-    margin-top: 6px !important;
-  }
-  /* Bloco renda — block (flex quebra Chart.js) */
-  .card:has(canvas#city-renda) .chart-wrap {
-    height: 220px !important;
-  }
-  /* Pirâmide compactada para não esticar demais o card vizinho */
-  .card:has(canvas#city-pyramid) .chart-wrap,
-  .card:has(canvas#micro-pyramid) .chart-wrap { height: 280px !important; }
-  .map { height: 240px !important; }
-  .map-sm { height: 200px !important; }
-  /* Na impressão, o snapshot PNG é o que é exibido */
-  .print-snapshot {
-    position: absolute !important;
-    top: 0 !important; left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: contain !important;
-    display: block !important;
-    background: #fff !important;
-  }
-  canvas[data-print-replaced="1"] { visibility: hidden !important; }
-
-  /* KPIs compactos — caixa baixa, várias colunas no A4 portrait */
-  .kpis {
-    display: grid !important;
-    grid-template-columns: repeat(5, 1fr) !important;
-    gap: 3px !important;
-  }
-  .kpis.kpis-3 { grid-template-columns: repeat(3, 1fr) !important; }
-  .kpis.kpis-4 { grid-template-columns: repeat(4, 1fr) !important; }
-  .kpis.kpis-2 { grid-template-columns: repeat(2, 1fr) !important; }
-  .kpi {
-    padding: 4px 6px !important;
-    min-height: 0 !important;
-    gap: 1px !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-  .kpi .k-val { font-size: 12.5px !important; line-height: 1.1 !important; font-weight: 800 !important; }
-  .kpi.big .k-val { font-size: 14px !important; }
-  .kpi .k-label { font-size: 7.5px !important; line-height: 1 !important; letter-spacing: 0.3px !important; }
-  .kpi .k-compare {
-    font-size: 7.5px !important;
-    padding-top: 1px !important;
-    margin-top: 1px !important;
-    border-top: none !important;
-  }
-
-  /* Top 3 hospitais */
-  .top3-hospital {
-    display: grid !important;
-    grid-template-columns: 140px 1fr !important;
-    gap: 10px !important; padding: 10px !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-  .top3-photo { height: 140px !important; }
-  .top3-photo .icon svg { width: 56px; height: 56px; }
-  .top3-stats { grid-template-columns: repeat(4, 1fr) !important; gap: 4px !important; }
-  .top3-stats .value { font-size: 14px !important; }
-  .top3-stat { padding: 5px 4px !important; }
-  .top3-stat .label { font-size: 8.5px !important; }
-
-  /* Tabelas compactas — fonte menor, quebra de palavra para nomes longos
-     (operadoras "COOPERATIVA DE SERVIÇOS DE SAÚDE..."), e larguras controladas
-     para que colunas numéricas não sumam à direita. */
-  .table {
-    font-size: 9.5px !important;
-    width: 100% !important;
-    table-layout: auto !important;
-    border-collapse: collapse !important;
-  }
-  .table th, .table td {
-    padding: 3px 4px !important;
-    word-break: break-word !important;
-    overflow-wrap: break-word !important;
-    white-space: normal !important;
-    vertical-align: top !important;
-  }
-  .table th { font-size: 8.5px !important; letter-spacing: 0.2px !important; }
-  .table th.num, .table td.num {
-    white-space: nowrap !important;
-    word-break: keep-all !important;
-  }
-  .table-wrap {
-    max-height: none !important;
-    overflow: visible !important;
-    border: none !important;
-    width: 100% !important;
-  }
-
-  /* Perfil e insights — coluna única para economizar espaço */
-  .grid-2 { grid-template-columns: 1fr 1fr; gap: 6px; }
-  .profile { grid-template-columns: 1fr; gap: 4px; }
-  .profile .line { padding: 6px 8px; font-size: 11.5px; }
-
-  /* Aba Infra: ocultar o card do mapa no PDF (mantém só os 3 maiores hosp.) */
-  .card:has(#infra-map) { display: none !important; }
-
-  /* Títulos menores nos cards */
-  .card h3 { font-size: 12.5px; margin-bottom: 6px; }
-  .muted { font-size: 10px; }
-}
-
 /* =========================================================
  * Impressão / PDF
  * ========================================================= */
@@ -592,52 +410,64 @@ body {
     margin: 10mm;
   }
 
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
   html,
   body {
     background: #fff !important;
     color: #0b1220 !important;
-    font-size: 12.5pt !important;
+    font-size: 12pt !important;
     line-height: 1.35 !important;
   }
 
   .topbar,
   .tabs,
+  .mini-search,
   #loader,
+  .loader,
   #error,
+  .error,
   #suggestions,
   #landing,
-  #print-btn {
+  #print-btn,
+  .btn-ghost,
+  .card.pending {
     display: none !important;
   }
 
-  #dashboard {
+  #dashboard,
+  .dashboard {
     display: block !important;
-  }
-
-  .tab-panel {
-    display: block !important;
-    break-before: page;
-    page-break-before: always;
-  }
-
-  .tab-panel[data-panel="micro"] {
-    break-before: auto;
-    page-break-before: auto;
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .hero {
     box-shadow: none !important;
     border: 1px solid #cfd6e4 !important;
-    margin-bottom: 8mm !important;
-    padding: 10mm !important;
+    border-radius: 8px !important;
+    margin: 0 0 7mm !important;
+    padding: 8mm !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
-  .hero h2,
+  .eyebrow {
+    font-size: 9pt !important;
+  }
+
   #city-title {
     font-size: 22pt !important;
     line-height: 1.15 !important;
   }
 
+  #city-sub,
   .sub,
   .muted,
   .landing-note {
@@ -645,64 +475,153 @@ body {
     line-height: 1.35 !important;
   }
 
+  .tab-panel {
+    display: block !important;
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .tab-panel[data-panel="micro"] {
+    break-before: auto !important;
+    page-break-before: auto !important;
+  }
+
+ .tab-panel::before {
+  display: block !important;
+  font-size: 20pt !important;
+  font-weight: 950 !important;
+  line-height: 1.1 !important;
+  color: #1a3566 !important;
+  letter-spacing: 1.2px !important;
+  text-transform: uppercase !important;
+  border-left: 8px solid #1a3566 !important;
+  border-bottom: 2px solid #1a3566 !important;
+  background: #f3f6fb !important;
+  padding: 8px 12px 7px !important;
+  margin: 0 0 8mm !important;
+  break-after: avoid !important;
+  page-break-after: avoid !important;
+}
+
+.tab-panel[data-panel="micro"]::before {
+  content: "MICRORREGIÃO";
+}
+
+.tab-panel[data-panel="cidade"]::before,
+.tab-panel[data-panel="city"]::before {
+  content: "CIDADE";
+  color: #0b1220 !important;
+  border-left-color: #0b1220 !important;
+  border-bottom-color: #0b1220 !important;
+  background: #f7f7f8 !important;
+}
+
+.tab-panel[data-panel="infra"]::before {
+  content: "INFRAESTRUTURA";
+}
+
   .card {
     box-shadow: none !important;
     border: 1px solid #cfd6e4 !important;
     border-radius: 8px !important;
-    padding: 10px 12px !important;
-    margin-bottom: 8mm !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    padding: 9px 11px !important;
+    margin: 0 0 7mm !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   .card h3 {
-    font-size: 14pt !important;
+    font-size: 13pt !important;
     line-height: 1.2 !important;
-    margin-bottom: 8px !important;
+    margin: 0 0 7px !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 
   .grid-2 {
     display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 8mm !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 7mm !important;
   }
 
-  .kpis,
-  .kpis.kpis-4 {
+  .profile {
     display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 5px !important;
+  }
+
+  .profile .line {
+    font-size: 10.5pt !important;
+    line-height: 1.35 !important;
+    padding: 6px 8px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .kpis {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 5mm !important;
+    margin-bottom: 6mm !important;
+  }
+
+  .kpis.kpis-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .kpis.kpis-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .kpis.kpis-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 6mm !important;
-    margin-bottom: 8mm !important;
   }
 
   .kpi {
     box-shadow: none !important;
     border: 1px solid #cfd6e4 !important;
     border-radius: 8px !important;
-    padding: 9px 10px !important;
-    min-height: auto !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    padding: 8px 9px !important;
+    min-height: 58px !important;
+    gap: 2px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
+  .kpi .k-label,
   .k-label {
-    font-size: 10pt !important;
-    line-height: 1.25 !important;
+    font-size: 8.8pt !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.25px !important;
   }
 
+  .kpi .k-val,
   .k-val {
-    font-size: 16pt !important;
-    line-height: 1.15 !important;
+    font-size: 15pt !important;
+    line-height: 1.1 !important;
+    font-weight: 900 !important;
   }
 
+  .kpi.big .k-val {
+    font-size: 18pt !important;
+  }
+
+  .kpi .k-compare,
   .k-compare {
-    font-size: 10pt !important;
-    line-height: 1.25 !important;
+    font-size: 8.5pt !important;
+    line-height: 1.2 !important;
+    padding-top: 2px !important;
+    margin-top: 2px !important;
   }
 
   .table-wrap {
     overflow: visible !important;
     max-height: none !important;
+    border: 1px solid #cfd6e4 !important;
+    width: 100% !important;
   }
 
   table.table,
@@ -710,55 +629,177 @@ body {
     width: 100% !important;
     border-collapse: collapse !important;
     font-size: 9.5pt !important;
+    table-layout: auto !important;
+  }
+
+  .table thead {
+    display: table-header-group !important;
+  }
+
+  .table tfoot {
+    display: table-footer-group !important;
   }
 
   .table th,
   .table td {
     padding: 5px 6px !important;
     white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
     line-height: 1.25 !important;
+    vertical-align: top !important;
   }
 
   .table th {
-    font-size: 9.5pt !important;
-    font-weight: 800 !important;
+    font-size: 8.8pt !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.2px !important;
+  }
+
+  .table th.num,
+  .table td.num {
+    text-align: right !important;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .table tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   .chart-wrap {
-    height: 95mm !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    height: 85mm !important;
+    position: relative !important;
+    display: block !important;
+    max-width: 100% !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   .chart-wrap.small {
+    height: 60mm !important;
+    max-width: 260px !important;
+    margin: 0 auto !important;
+  }
+
+ /* Gráficos específicos */
+  .card:has(canvas#city-pyramid) .chart-wrap,
+  .card:has(canvas#micro-pyramid) .chart-wrap {
+    height: 105mm !important;
+  }
+
+  .card:has(canvas#city-renda) .chart-wrap {
     height: 75mm !important;
   }
 
+  /* Quebra de página: tabelas podem quebrar; cards visuais devem permanecer juntos */
+  .card:has(table.table) {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .card:has(table.table) .table-wrap {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .card:has(table.table) table,
+  .card:has(table.table) tbody,
+  .card:has(table.table) tr {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .card:has(.chart-wrap),
+  .card:has(.map),
+  .card:has(.map-sm),
+  .card:has(.kpis),
+  .card:has(.iqm-wrap) {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Snapshots dos gráficos para impressão */
   .print-snapshot {
-    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
     width: 100% !important;
-    max-height: 95mm !important;
+    height: 100% !important;
+    max-height: none !important;
     object-fit: contain !important;
+    display: block !important;
+    background: #fff !important;
   }
 
   canvas[data-print-replaced="1"] {
-    display: none !important;
+    visibility: hidden !important;
   }
 
   .map,
   .map-sm {
-    height: 90mm !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    height: 75mm !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .top3 {
+    display: grid !important;
+    gap: 7mm !important;
   }
 
   .top3-hospital {
-    break-inside: avoid;
-    page-break-inside: avoid;
+    display: grid !important;
+    grid-template-columns: 170px 1fr !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
-  .profile .line {
-    font-size: 10.5pt !important;
-    line-height: 1.35 !important;
+  .top3-photo {
+    height: 150px !important;
+  }
+
+  .top3-body h4 {
+    font-size: 13pt !important;
+  }
+
+  .top3-body .sub-info {
+    font-size: 9.5pt !important;
+  }
+
+  .top3-stats {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 5px !important;
+  }
+
+  .top3-stat {
+    padding: 5px !important;
+  }
+
+  .top3-stat .label {
+    font-size: 8pt !important;
+  }
+
+  .top3-stat .value {
+    font-size: 13pt !important;
+  }
+
+  .leito-type,
+  .spec-tag {
+    font-size: 8.5pt !important;
+    padding: 3px 7px !important;
+  }
+
+  .legend {
+    font-size: 9pt !important;
+    gap: 8px !important;
+  }
+
+  .foot {
+    display: none !important;
   }
 }
