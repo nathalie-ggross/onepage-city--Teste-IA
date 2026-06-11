@@ -2069,6 +2069,36 @@ async function buildRegionalBubblePoints({
     if (p) pointsById[id] = p;
   }
 
+const microPopTotal = microIds.reduce((sum, id) => {
+  return sum + Number(popByCity[id] || 0);
+}, 0);
+
+const microAnsTotal = microIds.reduce((sum, id) => {
+  return sum + Number(ansByCity[id]?.total || 0);
+}, 0);
+
+const microPrivadosTotal = leitosMicro?.totais?.privados != null
+  ? Number(leitosMicro.totais.privados || 0)
+  : Object.values(privadosByCod6).reduce((sum, v) => sum + Number(v || 0), 0);
+
+const microPibTotal = microIds.reduce((sum, id) => {
+  return sum + Number(pibByCity[id]?.pib || 0);
+}, 0);
+
+const microAggPoint = buildBubblePoint({
+  id: `micro-${state.micro.id}`,
+  label: `Microrregião de ${state.micro.nome}`,
+  kind: "microAgg",
+  pop: microPopTotal,
+  ansTotal: microAnsTotal,
+  privados: microPrivadosTotal,
+  pib: { pib: microPibTotal },
+});
+
+if (microAggPoint) {
+  pointsById[microAggPoint.id] = microAggPoint;
+}
+  
   const caxiasAns = ansMHOnly(ansCaxiasRaw);
 
   const caxiasPoint = buildBubblePoint({
@@ -2101,18 +2131,37 @@ async function buildRegionalBubblePoints({
 
   const points = Object.values(pointsById);
 
-  const maxPib = Math.max(...points.map(p => p.pib || 0), 1);
+const pibValues = points
+  .map(p => Number(p.pib || 0))
+  .filter(v => v > 0);
+
+if (!pibValues.length) {
+  for (const p of points) p.r = 8;
+} else {
+  const logs = pibValues.map(v => Math.log10(v));
+  const minLogPib = Math.min(...logs);
+  const maxLogPib = Math.max(...logs);
 
   for (const p of points) {
-    p.r = 7 + Math.sqrt((p.pib || 0) / maxPib) * 25;
-  }
+    const pib = Number(p.pib || 0);
 
-  const rank = {
-    micro: 1,
-    caxias: 2,
-    poa: 3,
-    current: 4,
-  };
+    if (!pib || maxLogPib === minLogPib) {
+      p.r = 8;
+      continue;
+    }
+
+    const norm = (Math.log10(pib) - minLogPib) / (maxLogPib - minLogPib);
+    p.r = 7 + norm * 23;
+  }
+}
+
+const rank = {
+  micro: 1,
+  microAgg: 2,
+  caxias: 3,
+  poa: 4,
+  current: 5,
+};
 
   points.sort((a, b) => (rank[a.kind] || 0) - (rank[b.kind] || 0));
 
@@ -2234,34 +2283,37 @@ function renderBubbleChart(points) {
     return;
   }
 
-  const colorFor = (kind) => {
-    if (kind === "current") return "#1a3566";
-    if (kind === "poa") return "#d94a4a";
-    if (kind === "caxias") return "#2e8b57";
-    return "#8a93a3";
-  };
+const colorFor = (kind) => {
+  if (kind === "current") return "#1a3566";
+  if (kind === "poa") return "#d94a4a";
+  if (kind === "caxias") return "#2e8b57";
+  if (kind === "microAgg") return "#111827";
+  return "#8a93a3";
+};
 
-  const labelForKind = (kind) => {
-    if (kind === "current") return "Cidade pesquisada";
-    if (kind === "poa") return "Porto Alegre";
-    if (kind === "caxias") return "Caxias do Sul";
-    return "Município da microrregião";
-  };
+const labelForKind = (kind) => {
+  if (kind === "current") return "Cidade pesquisada";
+  if (kind === "poa") return "Porto Alegre";
+  if (kind === "caxias") return "Caxias do Sul";
+  if (kind === "microAgg") return "Microrregião consolidada";
+  return "Município da microrregião";
+};
 
-  const ds = {
-    label: "Municípios",
-    data: points.map(p => ({
-      x: p.x,
-      y: p.y,
-      r: p.r,
-      label: p.label,
-      kind: p.kind,
-      pib: p.pib,
-    })),
-    backgroundColor: points.map(p => colorFor(p.kind) + "cc"),
-    borderColor: points.map(p => colorFor(p.kind)),
-    borderWidth: points.map(p => p.kind === "micro" ? 1.5 : 2.5),
-  };
+const ds = {
+  label: "Municípios",
+  data: points.map(p => ({
+    x: p.x,
+    y: p.y,
+    r: p.r,
+    label: p.label,
+    kind: p.kind,
+    pib: p.pib,
+  })),
+  backgroundColor: points.map(p => colorFor(p.kind) + "cc"),
+  borderColor: points.map(p => colorFor(p.kind)),
+  borderWidth: points.map(p => p.kind === "micro" ? 1.5 : 2.8),
+  pointStyle: points.map(p => p.kind === "microAgg" ? "rect" : "circle"),
+};
 
   state.charts[key] = new Chart(canvas, {
     type: "bubble",
