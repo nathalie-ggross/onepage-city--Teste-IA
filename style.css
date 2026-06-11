@@ -581,3 +581,184 @@ body {
   .card h3 { font-size: 12.5px; margin-bottom: 6px; }
   .muted { font-size: 10px; }
 }
+
+/* =========================================================
+ * Impressão / PDF
+ * ========================================================= */
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #0b1220 !important;
+    font-size: 12.5pt !important;
+    line-height: 1.35 !important;
+  }
+
+  .topbar,
+  .tabs,
+  #loader,
+  #error,
+  #suggestions,
+  #landing,
+  #print-btn {
+    display: none !important;
+  }
+
+  #dashboard {
+    display: block !important;
+  }
+
+  .tab-panel {
+    display: block !important;
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .tab-panel[data-panel="micro"] {
+    break-before: auto;
+    page-break-before: auto;
+  }
+
+  .hero {
+    box-shadow: none !important;
+    border: 1px solid #cfd6e4 !important;
+    margin-bottom: 8mm !important;
+    padding: 10mm !important;
+  }
+
+  .hero h2,
+  #city-title {
+    font-size: 22pt !important;
+    line-height: 1.15 !important;
+  }
+
+  .sub,
+  .muted,
+  .landing-note {
+    font-size: 9.5pt !important;
+    line-height: 1.35 !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #cfd6e4 !important;
+    border-radius: 8px !important;
+    padding: 10px 12px !important;
+    margin-bottom: 8mm !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .card h3 {
+    font-size: 14pt !important;
+    line-height: 1.2 !important;
+    margin-bottom: 8px !important;
+  }
+
+  .grid-2 {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8mm !important;
+  }
+
+  .kpis,
+  .kpis.kpis-4 {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6mm !important;
+    margin-bottom: 8mm !important;
+  }
+
+  .kpi {
+    box-shadow: none !important;
+    border: 1px solid #cfd6e4 !important;
+    border-radius: 8px !important;
+    padding: 9px 10px !important;
+    min-height: auto !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .k-label {
+    font-size: 10pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .k-val {
+    font-size: 16pt !important;
+    line-height: 1.15 !important;
+  }
+
+  .k-compare {
+    font-size: 10pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .table-wrap {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  table.table,
+  .table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 9.5pt !important;
+  }
+
+  .table th,
+  .table td {
+    padding: 5px 6px !important;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+  }
+
+  .table th {
+    font-size: 9.5pt !important;
+    font-weight: 800 !important;
+  }
+
+  .chart-wrap {
+    height: 95mm !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .chart-wrap.small {
+    height: 75mm !important;
+  }
+
+  .print-snapshot {
+    display: block !important;
+    width: 100% !important;
+    max-height: 95mm !important;
+    object-fit: contain !important;
+  }
+
+  canvas[data-print-replaced="1"] {
+    display: none !important;
+  }
+
+  .map,
+  .map-sm {
+    height: 90mm !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .top3-hospital {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .profile .line {
+    font-size: 10.5pt !important;
+    line-height: 1.35 !important;
+  }
+}
