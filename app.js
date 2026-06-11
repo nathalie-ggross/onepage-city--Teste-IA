@@ -1459,22 +1459,30 @@ function renderTypesTable(scope, estabsTarget, estabsPOA, estabsCaxias = null) {
 /* Δ% formatter — diferença relativa de v vs referência.
  * (v - ref) / ref. Mostra "—" quando ref ausente; "+∞" se v>0 e ref=0; "0%" se ambos = 0.
  */
- * (v - ref) / ref. Mostra "—" quando ref ausente; "+∞" se v>0 e ref=0; "0%" se ambos = 0.
- */
 function diffPct(v, ref) {
-  v = Number(v) || 0; ref = Number(ref) || 0;
+  v = Number(v) || 0;
+  ref = Number(ref) || 0;
+
   if (!ref && !v) return "0%";
   if (!ref) return v > 0 ? "+∞" : "—";
+
   const d = ((v - ref) / ref) * 100;
   const sign = d > 0 ? "+" : "";
+
   return `${sign}${d.toFixed(1)}%`;
 }
+
 function diffClass(v, ref) {
-  v = Number(v) || 0; ref = Number(ref) || 0;
+  v = Number(v) || 0;
+  ref = Number(ref) || 0;
+
   if (!ref) return v > 0 ? " diff-pos" : "";
+
   const d = v - ref;
+
   return d > 0 ? " diff-pos" : d < 0 ? " diff-neg" : "";
 }
+
 
 function renderServicesTable(scope, estabsTarget, estabsPOA, estabsCaxias = null) {
   const tbody = $(`#${scope}-services-table tbody`);
