@@ -299,31 +299,43 @@ function snapshotAllCharts() {
 
 function restoreAllCharts() {
   try {
-    document.body.classList.remove("printing");
+    document.body.classList.remove("printing", "print-executive", "print-detailed");
+
     document.querySelectorAll("img.print-snapshot").forEach(img => img.remove());
+
     document.querySelectorAll("canvas[data-print-replaced='1']").forEach(c => {
       c.style.visibility = "";
       c.dataset.printReplaced = "0";
     });
+
     togglePrintValues(false);
   } catch (e) {
     console.warn("restoreAllCharts falhou:", e);
   }
 }
 
-function runPrint() {
+function runPrint(mode = "detailed") {
   try {
+    document.body.classList.remove("print-executive", "print-detailed");
+
+    if (mode === "executive") {
+      document.body.classList.add("print-executive");
+    } else {
+      document.body.classList.add("print-detailed");
+    }
+
     for (const k in state.maps) {
       try { state.maps[k].invalidateSize(); } catch {}
     }
-    // Pequeno delay para o DOM se estabilizar (mapas, etc.)
+
     setTimeout(() => {
-     try {
-  document.body.classList.add("printing");
-  snapshotAllCharts();
+      try {
+        document.body.classList.add("printing");
+        snapshotAllCharts();
       } catch (e) {
         console.warn("snapshotAllCharts falhou — imprimindo mesmo assim:", e);
       }
+
       requestAnimationFrame(() => {
         try {
           window.print();
@@ -331,6 +343,7 @@ function runPrint() {
           console.error("window.print() falhou:", e);
           alert("Não foi possível abrir a janela de impressão. Use Ctrl/Cmd+P como alternativa.");
         }
+
         setTimeout(restoreAllCharts, 600);
       });
     }, 80);
@@ -339,17 +352,33 @@ function runPrint() {
     alert("Erro ao preparar impressão: " + (e.message || e));
   }
 }
+const printExecBtn = document.getElementById("print-exec-btn");
+if (printExecBtn) {
+  printExecBtn.addEventListener("click", () => runPrint("executive"));
+}
 
-const printBtn = document.getElementById("print-btn");
-if (printBtn) printBtn.addEventListener("click", runPrint);
+const printDetailBtn = document.getElementById("print-detail-btn");
+if (printDetailBtn) {
+  printDetailBtn.addEventListener("click", () => runPrint("detailed"));
+}
 
 // Fallback: se o usuário apertar Ctrl/Cmd+P direto (não passou pelo botão),
-// cai de volta pro caminho via evento.
+// cai de volta para impressão detalhada.
 window.addEventListener("beforeprint", () => {
   document.body.classList.add("printing");
+
+  if (!document.body.classList.contains("print-executive") &&
+      !document.body.classList.contains("print-detailed")) {
+    document.body.classList.add("print-detailed");
+  }
+
   if (!document.querySelector("img.print-snapshot")) snapshotAllCharts();
-  for (const k in state.maps) try { state.maps[k].invalidateSize(); } catch {}
+
+  for (const k in state.maps) {
+    try { state.maps[k].invalidateSize(); } catch {}
+  }
 });
+
 window.addEventListener("afterprint", restoreAllCharts);
 
 /* ===== Tab switcher ===== */
@@ -1144,6 +1173,49 @@ function renderPyramid(scope, pyramid) {
   });
 }
 
+function honestYScale(values, options = {}) {
+  const {
+    minSpanPct = 0.20,
+    padPct = 0.06,
+    forceZero = false,
+  } = options;
+
+  const nums = (values || [])
+    .map(Number)
+    .filter(v => Number.isFinite(v));
+
+  if (!nums.length) return {};
+
+  const min = Math.min(...nums);
+  const max = Math.max(...nums);
+
+  if (forceZero) {
+  return {
+    min: 0,
+    suggestedMax: Math.max(1, Math.ceil(max * (1 + padPct))),
+  };
+}
+
+  if (min === max) {
+    const pad = Math.max(max * minSpanPct, 1);
+    return {
+      min: Math.max(0, min - pad),
+      max: max + pad,
+    };
+  }
+
+  const span = max - min;
+  const minSpan = Math.max(max * minSpanPct, 1);
+  const finalSpan = Math.max(span, minSpan);
+  const center = (max + min) / 2;
+  const paddedSpan = finalSpan * (1 + padPct);
+
+  return {
+    min: Math.max(0, center - paddedSpan / 2),
+    max: center + paddedSpan / 2,
+  };
+}
+
 function renderEvolution(scope, series, pyramid) {
   const key = `${scope}-evolution`;
   destroyChart(key);
@@ -1155,6 +1227,7 @@ function renderEvolution(scope, series, pyramid) {
   const ratioF = total2022 ? women2022 / total2022 : 0.51;
   const years = series.map(([y]) => y);
   const totals = series.map(([, v]) => v);
+  const yScale = honestYScale(totals, { forceZero: true });
   state.charts[key] = new Chart($(`#${key}`), {
     type: "line",
     data: {
@@ -1186,7 +1259,12 @@ function renderEvolution(scope, series, pyramid) {
         legend: { position: "bottom" },
         tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmt(c.parsed.y)}` } },
       },
-      scales: { y: { ticks: { callback: v => fmt(v) } } },
+      scales: {
+  y: {
+    ...yScale,
+    ticks: { callback: v => fmt(v) },
+  },
+},
     },
   });
 }
@@ -1199,6 +1277,9 @@ function renderAnsEvolution(scope, series) {
       `<p class="muted">Histórico insuficiente — servidor ainda processando meses adicionais. Aguarde alguns minutos e recarregue.</p>`;
     return;
   }
+  const values = series.map(s => s.total);
+const yScale = honestYScale(values, { minSpanPct: 0.25, padPct: 0.08 });
+  
   state.charts[key] = new Chart($(`#${key}`), {
     type: "line",
     data: {
@@ -1219,7 +1300,12 @@ function renderAnsEvolution(scope, series) {
         legend: { display: false },
         tooltip: { callbacks: { label: c => fmt(c.parsed.y) } },
       },
-      scales: { y: { ticks: { callback: v => fmt(v) } } },
+      scales: {
+  y: {
+    ...yScale,
+    ticks: { callback: v => fmt(v) },
+  },
+},
     },
   });
 }
@@ -1763,6 +1849,9 @@ function renderLeitosPrivEvolution(scope, series) {
       `<p class="muted">Histórico anual indisponível para esta competência.</p>`;
     return;
   }
+  const values = series.map(s => s.privados);
+const yScale = honestYScale(values, { forceZero: true });
+  
   state.charts[key] = new Chart(canvas, {
     type: "line",
     data: {
@@ -1786,7 +1875,11 @@ function renderLeitosPrivEvolution(scope, series) {
       },
       scales: {
         x: { title: { display: true, text: "Ano" } },
-        y: { title: { display: true, text: "Leitos privados" }, ticks: { callback: v => fmt(v) } },
+        y: {
+  ...yScale,
+  title: { display: true, text: "Leitos privados" },
+  ticks: { callback: v => fmt(v) },
+},
       },
     },
   });
