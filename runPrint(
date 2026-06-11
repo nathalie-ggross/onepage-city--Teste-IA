@@ -200,7 +200,7 @@ const printValuesPlugin = {
           : Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
       };
       ctx.save();
-      ctx.font = "700 10px -apple-system, 'Inter', Helvetica, Arial, sans-serif";
+      ctx.font = "800 13px -apple-system, 'Inter', Helvetica, Arial, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       const chartType = chart?.config?.type || "";
@@ -225,9 +225,9 @@ const printValuesPlugin = {
             : { x: elem.x, y: elem.y };
           if (pos.x == null || pos.y == null) return;
           let x = pos.x, y = pos.y;
-          const padX = 3, padY = 1.5;
+          const padX = 4, padY = 2.5;
           const w = ctx.measureText(label).width + padX * 2;
-          const h = 12;
+          const h = 16;
           if (type === "bar") {
             if (chart.options.indexAxis === "y") {
               x = elem.x + (val < 0 ? -10 : 10);
@@ -299,6 +299,7 @@ function snapshotAllCharts() {
 
 function restoreAllCharts() {
   try {
+    document.body.classList.remove("printing");
     document.querySelectorAll("img.print-snapshot").forEach(img => img.remove());
     document.querySelectorAll("canvas[data-print-replaced='1']").forEach(c => {
       c.style.visibility = "";
@@ -317,8 +318,9 @@ function runPrint() {
     }
     // Pequeno delay para o DOM se estabilizar (mapas, etc.)
     setTimeout(() => {
-      try {
-        snapshotAllCharts();
+     try {
+  document.body.classList.add("printing");
+  snapshotAllCharts();
       } catch (e) {
         console.warn("snapshotAllCharts falhou — imprimindo mesmo assim:", e);
       }
@@ -344,6 +346,7 @@ if (printBtn) printBtn.addEventListener("click", runPrint);
 // Fallback: se o usuário apertar Ctrl/Cmd+P direto (não passou pelo botão),
 // cai de volta pro caminho via evento.
 window.addEventListener("beforeprint", () => {
+  document.body.classList.add("printing");
   if (!document.querySelector("img.print-snapshot")) snapshotAllCharts();
   for (const k in state.maps) try { state.maps[k].invalidateSize(); } catch {}
 });
@@ -2429,7 +2432,8 @@ const ds = {
         const { ctx } = chart;
         ctx.save();
 
-        ctx.font = "700 10.5px -apple-system, 'Inter', Helvetica, Arial, sans-serif";
+        const isPrinting = document.body.classList.contains("printing");
+ctx.font = `800 ${isPrinting ? 13 : 10.5}px -apple-system, 'Inter', Helvetica, Arial, sans-serif`;
         ctx.fillStyle = "#0b1220";
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
