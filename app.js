@@ -81,6 +81,7 @@ const state = {
   estabsPOA: [],
   estabsCaxias: [],
   estabsMicro: [],
+  estabsPOAMicro: [],
   charts: {},
   maps: {},
 };
@@ -552,15 +553,27 @@ async function selectCity(ibgeId, name, uf) {
     const estabsCity = await fetchEstablishmentsByCity(String(ibgeId).slice(0, 6));
     state.establishments = estabsCity;
     // POA em paralelo com a microrregião agregada
-const [estabsPOA, estabsCaxias, estabsMicro] = await Promise.all([
+const poaLoc = await getJSON(`${IBGE_LOC}/municipios/${POA_IBGE}`);
+const poaMicroMun = await getJSON(`${IBGE_LOC}/microrregioes/${poaLoc.microrregiao.id}/municipios`);
+const poaMicroIds = poaMicroMun.map(m => String(m.id));
+const poaMicroCods6 = poaMicroIds.map(i => i.slice(0, 6));
+
+const [estabsPOA, estabsCaxias, estabsMicro, estabsPOAMicro, refPopForTables] = await Promise.all([
   String(ibgeId) === POA_IBGE ? Promise.resolve(estabsCity) : fetchEstablishmentsByCity(POA_CNES),
   String(ibgeId) === CAXIAS_IBGE ? Promise.resolve(estabsCity) : fetchEstablishmentsByCity(CAXIAS_CNES),
   fetchEstablishmentsByMicro(microIds.map(i => i.slice(0, 6))),
+  fetchEstablishmentsByMicro(poaMicroCods6),
+  fetchPopByMunicipios([CAXIAS_IBGE, POA_IBGE, ...poaMicroIds]).catch(() => ({})),
 ]);
+
+const popCaxiasRef = refPopForTables[CAXIAS_IBGE] || null;
+const popPOARef = refPopForTables[POA_IBGE] || null;
+const popPOAMicroRef = poaMicroIds.reduce((sum, id) => sum + Number(refPopForTables[id] || 0), 0);
 
 state.estabsPOA = estabsPOA;
 state.estabsCaxias = estabsCaxias;
 state.estabsMicro = estabsMicro;
+state.estabsPOAMicro = estabsPOAMicro;
 
     // 5) ANS — só médico-hospitalar
     showLoader("Carregando saúde suplementar (ANS)…");
@@ -613,8 +626,21 @@ state.estabsMicro = estabsMicro;
     renderEvolution("micro", evolutionMicro, pyramidMicro);
     renderAnsEvolution("micro", ansHistMicro?.series || []);
     renderOpsTable("micro", ansMicro);
-    renderTypesTable("micro", estabsMicro, estabsPOA);
-    renderServicesTable("micro", estabsMicro, estabsPOA);
+    const microPopTotal = Object.values(popByCity).reduce((a, b) => a + Number(b || 0), 0);
+
+renderTypesTable("micro", estabsMicro, estabsCaxias, estabsPOAMicro, {
+  mode: "micro",
+  targetPop: microPopTotal,
+  refAPop: popCaxiasRef,
+  refBPop: popPOAMicroRef,
+});
+
+renderServicesTable("micro", estabsMicro, estabsCaxias, estabsPOAMicro, {
+  mode: "micro",
+  targetPop: microPopTotal,
+  refAPop: popCaxiasRef,
+  refBPop: popPOAMicroRef,
+});
 
 // City tab
 const cityPop = popByCity[String(ibgeId)] ?? null;
@@ -643,8 +669,20 @@ renderMedicosBeneficiariosKPI({
   ansPoaTotal: poaRef?.city?.ansTotal || null,
 });
 
-renderTypesTable("city", estabsCity, estabsPOA, estabsCaxias);
-renderServicesTable("city", estabsCity, estabsPOA, estabsCaxias);
+renderTypesTable("city", estabsCity, estabsCaxias, estabsPOA, {
+  mode: "city",
+  targetPop: cityPop,
+  refAPop: popCaxiasRef,
+  refBPop: popPOARef,
+});
+
+renderServicesTable("city", estabsCity, estabsCaxias, estabsPOA, {
+  mode: "city",
+  targetPop: cityPop,
+  refAPop: popCaxiasRef,
+  refBPop: popPOARef,
+});
+    
 renderProfile({ loc, pop: cityPop, area: area2010, pyramid: pyramidCity, censo2010, ans: ansCity, pib, cempre });
 renderRendimentoChart(rendimento);
 
@@ -1533,88 +1571,22 @@ function renderMedicalDensityTable({ cidade, caxias, poa, popCidade, popCaxias, 
   }
 }
 
-function renderTypesTable(scope, estabsTarget, estabsPOA, estabsCaxias = null) {
-  const tbody = $(`#${scope}-types-table tbody`);
-  tbody.innerHTML = "";
+function per10k(value, pop) {
+  value = Number(value) || 0;
+  pop = Number(pop) || 0;
+  return pop ? (value / pop) * 10000 : null;
+}
 
-  const countBy = list => {
-    const c = {};
-    for (const e of list || []) {
-      const t = TIPO_UNIDADE_MAP[e.codigo_tipo_unidade] || `Tipo ${e.codigo_tipo_unidade ?? "N/I"}`;
-      c[t] = (c[t] || 0) + 1;
-    }
-    return c;
-  };
-
-  const cT = countBy(estabsTarget);
-  const cP = countBy(estabsPOA);
-  const cC = estabsCaxias ? countBy(estabsCaxias) : null;
-
-  const rows = Array.from(new Set([
-    ...Object.keys(cT),
-    ...Object.keys(cP),
-    ...(cC ? Object.keys(cC) : []),
-  ])).filter(name => (cT[name] || 0) > 0);
-
-  rows.sort((a, b) => (cT[b] || 0) - (cT[a] || 0));
-
-  for (const name of rows) {
-    const t = cT[name] || 0;
-    const p = cP[name] || 0;
-
-    if (cC) {
-      const cx = cC[name] || 0;
-
-      tbody.append(el("tr", {},
-        el("td", {}, name),
-        el("td", { class: "num" }, fmt(t)),
-        el("td", { class: "num" }, fmt(cx)),
-        el("td", { class: "num" }, fmt(p)),
-        el("td", { class: "num" + diffClass(t, cx) }, diffPct(t, cx)),
-      ));
-    } else {
-      tbody.append(el("tr", {},
-        el("td", {}, name),
-        el("td", { class: "num" }, fmt(t)),
-        el("td", { class: "num" }, fmt(p)),
-        el("td", { class: "num" + diffClass(t, p) }, diffPct(t, p)),
-      ));
-    }
+function countTypes(list) {
+  const c = {};
+  for (const e of list || []) {
+    const t = TIPO_UNIDADE_MAP[e.codigo_tipo_unidade] || `Tipo ${e.codigo_tipo_unidade ?? "N/I"}`;
+    c[t] = (c[t] || 0) + 1;
   }
+  return c;
 }
 
-/* Δ% formatter — diferença relativa de v vs referência.
- * (v - ref) / ref. Mostra "—" quando ref ausente; "+∞" se v>0 e ref=0; "0%" se ambos = 0.
- */
-function diffPct(v, ref) {
-  v = Number(v) || 0;
-  ref = Number(ref) || 0;
-
-  if (!ref && !v) return "0%";
-  if (!ref) return v > 0 ? "+∞" : "—";
-
-  const d = ((v - ref) / ref) * 100;
-  const sign = d > 0 ? "+" : "";
-
-  return `${sign}${d.toFixed(1)}%`;
-}
-
-function diffClass(v, ref) {
-  v = Number(v) || 0;
-  ref = Number(ref) || 0;
-
-  if (!ref) return v > 0 ? " diff-pos" : "";
-
-  const d = v - ref;
-
-  return d > 0 ? " diff-pos" : d < 0 ? " diff-neg" : "";
-}
-
-
-function renderServicesTable(scope, estabsTarget, estabsPOA, estabsCaxias = null) {
-  const tbody = $(`#${scope}-services-table tbody`);
-  tbody.innerHTML = "";
-
+function countServiceFlags(list) {
   const isNaoSus = e =>
     e.descricao_esfera_administrativa === "PRIVADA" &&
     e.estabelecimento_faz_atendimento_ambulatorial_sus !== "SIM";
@@ -1641,34 +1613,138 @@ function renderServicesTable(scope, estabsTarget, estabsPOA, estabsCaxias = null
     ["Esfera federal", e => e.descricao_esfera_administrativa === "FEDERAL"],
   ];
 
+  const c = {};
   for (const [label, fn] of flags) {
-    const nT = (estabsTarget || []).filter(fn).length;
-    const nP = (estabsPOA || []).filter(fn).length;
-    const nC = estabsCaxias ? (estabsCaxias || []).filter(fn).length : null;
+    c[label] = (list || []).filter(fn).length;
+  }
+  return c;
+}
+      
+function renderTypesTable(scope, estabsTarget, refA, refB = null, options = {}) {
+  const tbody = $(`#${scope}-types-table tbody`);
+  if (!tbody) return;
 
-    if (estabsCaxias) {
-      if (nT === 0 && nP === 0 && nC === 0) continue;
+  tbody.innerHTML = "";
 
+  const {
+    targetPop = null,
+    refAPop = null,
+    refBPop = null,
+    mode = "city",
+  } = options;
+
+  const cT = countTypes(estabsTarget);
+  const cA = countTypes(refA);
+  const cB = refB ? countTypes(refB) : null;
+
+  const rows = Array.from(new Set([
+    ...Object.keys(cT),
+    ...Object.keys(cA),
+    ...(cB ? Object.keys(cB) : []),
+  ])).filter(name => (cT[name] || 0) > 0);
+
+  rows.sort((a, b) => (cT[b] || 0) - (cT[a] || 0));
+
+  for (const name of rows) {
+    const targetCount = cT[name] || 0;
+    const refACount = cA[name] || 0;
+    const refBCount = cB ? (cB[name] || 0) : 0;
+
+    const targetRate = per10k(targetCount, targetPop);
+    const refARate = per10k(refACount, refAPop);
+    const refBRate = per10k(refBCount, refBPop);
+
+    if (mode === "micro") {
       tbody.append(el("tr", {},
-        el("td", {}, label),
-        el("td", { class: "num" }, fmt(nT)),
-        el("td", { class: "num" }, fmt(nC)),
-        el("td", { class: "num" }, fmt(nP)),
-        el("td", { class: "num" + diffClass(nT, nC) }, diffPct(nT, nC)),
+        el("td", {}, name),
+        el("td", { class: "num" }, fmt(targetCount)),
+        el("td", { class: "num" }, fmt1(targetRate)),
+        el("td", { class: "num" }, fmt1(refARate)),
+        el("td", { class: "num" }, fmt1(refBRate)),
+        el("td", { class: "num" + diffClass(targetRate, refARate) }, diffPct(targetRate, refARate)),
       ));
     } else {
-      if (nT === 0 && nP === 0) continue;
-
       tbody.append(el("tr", {},
-        el("td", {}, label),
-        el("td", { class: "num" }, fmt(nT)),
-        el("td", { class: "num" }, fmt(nP)),
-        el("td", { class: "num" + diffClass(nT, nP) }, diffPct(nT, nP)),
+        el("td", {}, name),
+        el("td", { class: "num" }, fmt(targetCount)),
+        el("td", { class: "num" }, fmt1(targetRate)),
+        el("td", { class: "num" }, fmt1(refARate)),
+        el("td", { class: "num" }, fmt1(refBRate)),
+        el("td", { class: "num" + diffClass(targetRate, refARate) }, diffPct(targetRate, refARate)),
       ));
     }
   }
 }
 
+function diffPct(v, ref) {
+  v = Number(v) || 0;
+  ref = Number(ref) || 0;
+
+  if (!ref && !v) return "0%";
+  if (!ref) return v > 0 ? "+∞" : "—";
+
+  const d = ((v - ref) / ref) * 100;
+  const sign = d > 0 ? "+" : "";
+
+  return `${sign}${d.toFixed(1)}%`;
+}
+
+function diffClass(v, ref) {
+  v = Number(v) || 0;
+  ref = Number(ref) || 0;
+
+  if (!ref) return v > 0 ? " diff-pos" : "";
+
+  const d = v - ref;
+
+  return d > 0 ? " diff-pos" : d < 0 ? " diff-neg" : "";
+}
+
+
+function renderServicesTable(scope, estabsTarget, refA, refB = null, options = {}) {
+  const tbody = $(`#${scope}-services-table tbody`);
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  const {
+    targetPop = null,
+    refAPop = null,
+    refBPop = null,
+    mode = "city",
+  } = options;
+
+  const cT = countServiceFlags(estabsTarget);
+  const cA = countServiceFlags(refA);
+  const cB = refB ? countServiceFlags(refB) : null;
+
+  const rows = Array.from(new Set([
+    ...Object.keys(cT),
+    ...Object.keys(cA),
+    ...(cB ? Object.keys(cB) : []),
+  ]));
+
+  for (const label of rows) {
+    const targetCount = cT[label] || 0;
+    const refACount = cA[label] || 0;
+    const refBCount = cB ? (cB[label] || 0) : 0;
+
+    if (targetCount === 0 && refACount === 0 && refBCount === 0) continue;
+
+    const targetRate = per10k(targetCount, targetPop);
+    const refARate = per10k(refACount, refAPop);
+    const refBRate = per10k(refBCount, refBPop);
+
+    tbody.append(el("tr", {},
+      el("td", {}, label),
+      el("td", { class: "num" }, fmt(targetCount)),
+      el("td", { class: "num" }, fmt1(targetRate)),
+      el("td", { class: "num" }, fmt1(refARate)),
+      el("td", { class: "num" }, fmt1(refBRate)),
+      el("td", { class: "num" + diffClass(targetRate, refARate) }, diffPct(targetRate, refARate)),
+    ));
+  }
+}
 /* -- Cidade -- */
 
 function renderCityKPIs(pop, area, density, pyramid, censo2010) {
