@@ -440,34 +440,91 @@ async function loadPOAReference() {
   return _poaRefCache;
 }
 
-function renderPOAReferences(ref) {
-  const setRef = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
-  };
-
+function renderPOAReferences(ref, caxias = null) {
   const ratio = (a, b) => (a && b) ? fmt(Math.round(a / b)) : "—";
 
-  // Cidade, referência POA
-  const c = ref?.city;
-  if (c?.leitosTotais) {
-    const t = c.leitosTotais;
-    setRef("ref-city-habxleito-tot", ratio(c.pop, t.existentes));
-    setRef("ref-city-habxleito-sus", ratio(c.pop, t.sus));
-    setRef("ref-city-benefxleito-priv", ratio(c.ansTotal, t.privados));
+  const setCompare = (id, caxiasValue, poaValue) => {
+    const node = document.getElementById(id);
+    if (!node) return;
+
+    const parent = node.closest(".k-compare") || node.parentElement;
+    if (!parent) {
+      node.textContent = poaValue;
+      return;
+    }
+
+    parent.innerHTML = `Caxias: <strong>${caxiasValue}</strong> · POA: <strong id="${id}">${poaValue}</strong>`;
+  };
+
+  const c = caxias || {};
+  const poaCity = ref?.city;
+  const poaMicro = ref?.micro;
+
+  const caxiasTot = c?.leitosTotais
+    ? ratio(c.pop, c.leitosTotais.existentes)
+    : "—";
+
+  const caxiasSus = c?.leitosTotais
+    ? ratio(c.pop, c.leitosTotais.sus)
+    : "—";
+
+  const caxiasBenefPriv = c?.leitosTotais
+    ? ratio(c.ansTotal, c.leitosTotais.privados)
+    : "—";
+
+  if (poaCity?.leitosTotais || c?.leitosTotais) {
+    const t = poaCity?.leitosTotais || {};
+
+    setCompare(
+      "ref-city-habxleito-tot",
+      caxiasTot,
+      poaCity ? ratio(poaCity.pop, t.existentes) : "—"
+    );
+
+    setCompare(
+      "ref-city-habxleito-sus",
+      caxiasSus,
+      poaCity ? ratio(poaCity.pop, t.sus) : "—"
+    );
+
+    setCompare(
+      "ref-city-benefxleito-priv",
+      caxiasBenefPriv,
+      poaCity ? ratio(poaCity.ansTotal, t.privados) : "—"
+    );
   }
 
-  // Microrregião, referência POA
-  const m = ref?.micro;
-  if (m?.leitosTotais) {
-    const t = m.leitosTotais;
-    setRef("ref-micro-habxleito-tot", ratio(m.pop, t.existentes));
-    setRef("ref-micro-habxleito-sus", ratio(m.pop, t.sus));
-    setRef("ref-micro-benefxleito-priv", ratio(m.ansTotal, t.privados));
+  if (poaMicro?.leitosTotais || c?.leitosTotais) {
+    const t = poaMicro?.leitosTotais || {};
+
+    setCompare(
+      "ref-micro-habxleito-tot",
+      caxiasTot,
+      poaMicro ? ratio(poaMicro.pop, t.existentes) : "—"
+    );
+
+    setCompare(
+      "ref-micro-habxleito-sus",
+      caxiasSus,
+      poaMicro ? ratio(poaMicro.pop, t.sus) : "—"
+    );
+
+    setCompare(
+      "ref-micro-benefxleito-priv",
+      caxiasBenefPriv,
+      poaMicro ? ratio(poaMicro.ansTotal, t.privados) : "—"
+    );
   }
 }
 
-function renderMedicosBeneficiariosKPI({ cidade, poa, ansCidade, ansPoaTotal }) {
+function renderMedicosBeneficiariosKPI({
+  cidade,
+  caxias,
+  poa,
+  ansCidade,
+  ansCaxiasTotal,
+  ansPoaTotal
+}) {
   const set = (id, value) => {
     const node = document.getElementById(id);
     if (node) node.textContent = value;
@@ -480,12 +537,22 @@ function renderMedicosBeneficiariosKPI({ cidade, poa, ansCidade, ansPoaTotal }) 
   };
 
   const cityVal = ratio(cidade?.total, ansCidade?.total);
+  const caxiasVal = ratio(caxias?.total, ansCaxiasTotal);
   const poaVal = ratio(poa?.total, ansPoaTotal);
 
   set("city-medxbenef", fmt1(cityVal));
-  set("ref-city-medxbenef", fmt1(poaVal));
-}
 
+  const node = document.getElementById("ref-city-medxbenef");
+  if (node) {
+    const parent = node.closest(".k-compare") || node.parentElement;
+
+    if (parent) {
+      parent.innerHTML = `Caxias: <strong>${fmt1(caxiasVal)}</strong> · POA: <strong id="ref-city-medxbenef">${fmt1(poaVal)}</strong>`;
+    } else {
+      node.textContent = fmt1(poaVal);
+    }
+  }
+}
 /* ===== Orchestrator ===== */
 async function selectCity(ibgeId, name, uf) {
   $("#suggestions").hidden = true;
@@ -579,27 +646,32 @@ state.estabsPOAMicro = estabsPOAMicro;
     showLoader("Carregando saúde suplementar (ANS)…");
     const cityCod6 = String(ibgeId).slice(0,6);
     const microCods6 = microIds.map(i => i.slice(0,6)).join(",");
-    const [ansCityRaw, ansMicroRaw, ansHistCityRaw, ansHistMicroRaw] = await Promise.all([
-      getJSON(`${ANS}?uf=${ufSigla}&cod=${cityCod6}`).catch(() => null),
-      getJSON(`${ANS}/multi?uf=${ufSigla}&cods=${microCods6}`).catch(() => null),
-      getJSON(`${ANS}/history?uf=${ufSigla}&cods=${cityCod6}`).catch(() => ({ series: [] })),
-      getJSON(`${ANS}/history?uf=${ufSigla}&cods=${microCods6}`).catch(() => ({ series: [] })),
-    ]);
-    const ansCity = ansMHOnly(ansCityRaw);
-    const ansMicro = ansMHOnly(ansMicroRaw);
+    const [ansCityRaw, ansMicroRaw, ansHistCityRaw, ansHistMicroRaw, ansCaxiasRawRef] = await Promise.all([
+  getJSON(`${ANS}?uf=${ufSigla}&cod=${cityCod6}`).catch(() => null),
+  getJSON(`${ANS}/multi?uf=${ufSigla}&cods=${microCods6}`).catch(() => null),
+  getJSON(`${ANS}/history?uf=${ufSigla}&cods=${cityCod6}`).catch(() => ({ series: [] })),
+  getJSON(`${ANS}/history?uf=${ufSigla}&cods=${microCods6}`).catch(() => ({ series: [] })),
+  getJSON(`${ANS}?uf=RS&cod=${CAXIAS_CNES}`).catch(() => null),
+]);
+
+const ansCity = ansMHOnly(ansCityRaw);
+const ansMicro = ansMHOnly(ansMicroRaw);
+const ansCaxiasRef = ansMHOnly(ansCaxiasRawRef);
+    
     // Para o histórico, usamos só mh (já vem quebrado)
     const ansHistCity = { series: (ansHistCityRaw?.series || []).map(s => ({ month: s.month, total: s.mh })) };
     const ansHistMicro = { series: (ansHistMicroRaw?.series || []).map(s => ({ month: s.month, total: s.mh })) };
 
     // 6) Leitos via ElastiCNES (+ serviços dos 3 maiores) + histórico anual + referência POA
     showLoader("Carregando leitos (ElastiCNES)… pode levar alguns segundos.");
-    const [leitosCity, leitosMicro, leitosHistCity, leitosHistMicro, poaRef] = await Promise.all([
-      getJSON(`${LEITOS}?cod=${cityCod6}`).catch(() => null),
-      getJSON(`${LEITOS}/multi?cods=${microCods6}`).catch(() => null),
-      getJSON(`${LEITOS}/history?cod=${cityCod6}`).catch(() => ({ series: [] })),
-      getJSON(`${LEITOS}/history?cods=${microCods6}`).catch(() => ({ series: [] })),
-      loadPOAReference(),
-    ]);
+    const [leitosCity, leitosMicro, leitosHistCity, leitosHistMicro, poaRef, leitosCaxiasRef] = await Promise.all([
+  getJSON(`${LEITOS}?cod=${cityCod6}`).catch(() => null),
+  getJSON(`${LEITOS}/multi?cods=${microCods6}`).catch(() => null),
+  getJSON(`${LEITOS}/history?cod=${cityCod6}`).catch(() => ({ series: [] })),
+  getJSON(`${LEITOS}/history?cods=${microCods6}`).catch(() => ({ series: [] })),
+  loadPOAReference(),
+  getJSON(`${LEITOS}?cod=${CAXIAS_CNES}`).catch(() => null),
+]);
     // Top 3 hospitais da cidade + seus serviços
     const top3 = (leitosCity?.hospitais || []).slice(0, 3);
     const top3Servicos = await Promise.all(top3.map(h =>
@@ -664,8 +736,10 @@ renderMedicalDensityTable({
 
 renderMedicosBeneficiariosKPI({
   cidade: medicosCity,
+  caxias: medicosCaxias,
   poa: medicosPOA,
   ansCidade: ansCity,
+  ansCaxiasTotal: ansCaxiasRef?.total || null,
   ansPoaTotal: poaRef?.city?.ansTotal || null,
 });
 
@@ -691,7 +765,11 @@ renderLeitosCity(leitosCity, cityPop, ansCity?.total || 0);
 renderLeitosMicro(leitosMicro, Object.values(popByCity).reduce((a,b)=>a+b,0), ansMicro?.total || 0);
 renderLeitosPrivEvolution("city", leitosHistCity?.series || []);
 renderLeitosPrivEvolution("micro", leitosHistMicro?.series || []);
-renderPOAReferences(poaRef);
+renderPOAReferences(poaRef, {
+  pop: popCaxiasRef,
+  ansTotal: ansCaxiasRef?.total || 0,
+  leitosTotais: leitosCaxiasRef?.totais || null,
+});
 
     // IQM e bubble chart (assíncrono — não bloqueia o resto)
 renderIQMandBubble({
@@ -2435,6 +2513,7 @@ const rank = {
   return points;
 }
 
+
 async function renderIQMandBubble(ctx) {
   const {
     cityIbge, cityName, cityUF, cityPop, censo2010,
@@ -2442,38 +2521,86 @@ async function renderIQMandBubble(ctx) {
     estabsCity, popByCity, leitosMicro, poaRef,
   } = ctx;
 
-  // 1) Métricas para cidade-alvo (já temos tudo)
   const cityHospHospitalar = (estabsCity || []).filter(e =>
     e.estabelecimento_possui_atendimento_hospitalar === 1
   ).length;
+
   const cityMetrics = {
     coberturaPct: cityPop ? (cityAns?.total || 0) / cityPop : 0,
     rendaAB: rendaABShare(cityRendimento),
     cagrPop: (cityPop && censo2010) ? (Math.pow(cityPop / censo2010, 1 / 12) - 1) * 100 : 0,
     hospPer100k: cityPop ? (cityHospHospitalar / cityPop) * 100000 : 0,
     benefPerLeitoPriv: (cityLeitos?.totais?.privados && cityAns?.total)
-      ? cityAns.total / cityLeitos.totais.privados : null,
+      ? cityAns.total / cityLeitos.totais.privados
+      : null,
   };
+
   const cityIQM = computeIQM(cityMetrics);
 
-  // 2) Métricas para POA — usamos referências já cacheadas + um fetch leve para renda + estabs (POA hospital count)
-  let poaIQM = null, poaMetrics = null;
+  let caxiasIQM = null;
+  let caxiasMetrics = null;
+
+  try {
+    const [
+      caxiasPopObj,
+      caxiasRendimento,
+      caxiasCenso2010,
+      caxiasAnsRaw,
+      caxiasLeitos
+    ] = await Promise.all([
+      fetchPopByMunicipios([CAXIAS_IBGE]).catch(() => ({})),
+      fetchRendimento(CAXIAS_IBGE).catch(() => []),
+      fetchCenso2010(CAXIAS_IBGE).catch(() => null),
+      getJSON(`${ANS}?uf=RS&cod=${CAXIAS_CNES}`).catch(() => null),
+      getJSON(`${LEITOS}?cod=${CAXIAS_CNES}`).catch(() => null),
+    ]);
+
+    const caxiasPop = caxiasPopObj[CAXIAS_IBGE] || 0;
+    const caxiasAns = ansMHOnly(caxiasAnsRaw);
+    const caxiasHospHospitalar = (state.estabsCaxias || []).filter(e =>
+      e.estabelecimento_possui_atendimento_hospitalar === 1
+    ).length;
+
+    caxiasMetrics = {
+      coberturaPct: caxiasPop ? (caxiasAns?.total || 0) / caxiasPop : 0,
+      rendaAB: rendaABShare(caxiasRendimento),
+      cagrPop: (caxiasPop && caxiasCenso2010)
+        ? (Math.pow(caxiasPop / caxiasCenso2010, 1 / 12) - 1) * 100
+        : 0,
+      hospPer100k: caxiasPop ? (caxiasHospHospitalar / caxiasPop) * 100000 : 0,
+      benefPerLeitoPriv: (caxiasLeitos?.totais?.privados && caxiasAns?.total)
+        ? caxiasAns.total / caxiasLeitos.totais.privados
+        : null,
+    };
+
+    caxiasIQM = computeIQM(caxiasMetrics);
+  } catch (e) {
+    console.warn("Falha ao calcular IQM Caxias:", e);
+  }
+
+  let poaIQM = null;
+  let poaMetrics = null;
+
   try {
     const poaRendimento = await fetchRendimento(POA_IBGE).catch(() => []);
     const poaEstabsHosp = state.estabsPOA.filter(e =>
       e.estabelecimento_possui_atendimento_hospitalar === 1
     ).length;
+
     const poaPop = poaRef?.city?.pop || 0;
     const poaAnsHistRaw = await getJSON(`${ANS}/history?uf=RS&cods=${POA_CNES}`).catch(() => ({ series: [] }));
     const poaCagr = cagrFromAnsSeries((poaAnsHistRaw?.series || []).map(s => ({ month: s.month, total: s.mh })));
+
     poaMetrics = {
       coberturaPct: poaPop ? (poaRef?.city?.ansTotal || 0) / poaPop : 0,
       rendaAB: rendaABShare(poaRendimento),
       cagrPop: 1.5,
       hospPer100k: poaPop ? (poaEstabsHosp / poaPop) * 100000 : 0,
       benefPerLeitoPriv: (poaRef?.city?.leitosTotais?.privados && poaRef?.city?.ansTotal)
-        ? poaRef.city.ansTotal / poaRef.city.leitosTotais.privados : null,
+        ? poaRef.city.ansTotal / poaRef.city.leitosTotais.privados
+        : null,
     };
+
     poaIQM = computeIQM(poaMetrics);
     poaMetrics._cagrAns = poaCagr;
     poaMetrics._pop = poaPop;
@@ -2483,42 +2610,103 @@ async function renderIQMandBubble(ctx) {
     console.warn("Falha ao calcular IQM POA:", e);
   }
 
-  // 3) Render IQM
   $("#city-iqm-value").textContent = String(cityIQM.total);
   $("#city-iqm-tier").textContent = tierIQM(cityIQM.total);
+
+  const tierNode = $("#city-iqm-tier");
+  if (tierNode) {
+    let refBox = document.getElementById("city-iqm-refbox");
+
+    if (!refBox) {
+      refBox = el("div", { id: "city-iqm-refbox", class: "iqm-refbox" });
+      tierNode.after(refBox);
+    }
+
+    refBox.innerHTML =
+      `<span>Ref Caxias: <strong>${caxiasIQM?.total ?? "—"}</strong> / 100</span>` +
+      `<span>Ref POA: <strong>${poaIQM?.total ?? "—"}</strong> / 100</span>`;
+  }
+
   const bars = $("#city-iqm-bars");
   bars.innerHTML = "";
+
   const fmtPct1 = v => (v == null || Number.isNaN(v)) ? "—" : `${(v * 100).toFixed(1)}%`;
   const fmtPctAA = v => (v == null || Number.isNaN(v)) ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(1)}% a.a.`;
   const fmtPer100k = v => (v == null || Number.isNaN(v)) ? "—" : v.toFixed(1);
+  const fmtBenefLeito = v => v ? `1 / ${fmt(Math.round(v))}` : "—";
+
   const rows = [
-    ["Cobertura ANS", cityIQM.parts.cobertura, poaIQM?.parts?.cobertura, fmtPct1(cityMetrics.coberturaPct), fmtPct1(poaMetrics?.coberturaPct)],
-    ["Renda classe A+B", cityIQM.parts.renda, poaIQM?.parts?.renda, fmtPct1(cityMetrics.rendaAB), fmtPct1(poaMetrics?.rendaAB)],
-    ["Crescimento populacional (CAGR 2010–2022)", cityIQM.parts.crescimento, poaIQM?.parts?.crescimento, fmtPctAA(cityMetrics.cagrPop), fmtPctAA(poaMetrics?.cagrPop)],
-    ["Hospitais / 100k hab.", cityIQM.parts.rede, poaIQM?.parts?.rede, fmtPer100k(cityMetrics.hospPer100k), fmtPer100k(poaMetrics?.hospPer100k)],
-    ["Leitos privados (1 / benef.)", cityIQM.parts.leitos, poaIQM?.parts?.leitos,
-      cityMetrics.benefPerLeitoPriv ? `1 / ${fmt(Math.round(cityMetrics.benefPerLeitoPriv))}` : "—",
-      poaMetrics?.benefPerLeitoPriv ? `1 / ${fmt(Math.round(poaMetrics.benefPerLeitoPriv))}` : "—"],
+    [
+      "Cobertura ANS",
+      cityIQM.parts.cobertura,
+      caxiasIQM?.parts?.cobertura,
+      poaIQM?.parts?.cobertura,
+      fmtPct1(cityMetrics.coberturaPct),
+      fmtPct1(caxiasMetrics?.coberturaPct),
+      fmtPct1(poaMetrics?.coberturaPct)
+    ],
+    [
+      "Renda classe A+B",
+      cityIQM.parts.renda,
+      caxiasIQM?.parts?.renda,
+      poaIQM?.parts?.renda,
+      fmtPct1(cityMetrics.rendaAB),
+      fmtPct1(caxiasMetrics?.rendaAB),
+      fmtPct1(poaMetrics?.rendaAB)
+    ],
+    [
+      "Crescimento populacional (CAGR 2010–2022)",
+      cityIQM.parts.crescimento,
+      caxiasIQM?.parts?.crescimento,
+      poaIQM?.parts?.crescimento,
+      fmtPctAA(cityMetrics.cagrPop),
+      fmtPctAA(caxiasMetrics?.cagrPop),
+      fmtPctAA(poaMetrics?.cagrPop)
+    ],
+    [
+      "Hospitais / 100k hab.",
+      cityIQM.parts.rede,
+      caxiasIQM?.parts?.rede,
+      poaIQM?.parts?.rede,
+      fmtPer100k(cityMetrics.hospPer100k),
+      fmtPer100k(caxiasMetrics?.hospPer100k),
+      fmtPer100k(poaMetrics?.hospPer100k)
+    ],
+    [
+      "Leitos privados (1 / benef.)",
+      cityIQM.parts.leitos,
+      caxiasIQM?.parts?.leitos,
+      poaIQM?.parts?.leitos,
+      fmtBenefLeito(cityMetrics.benefPerLeitoPriv),
+      fmtBenefLeito(caxiasMetrics?.benefPerLeitoPriv),
+      fmtBenefLeito(poaMetrics?.benefPerLeitoPriv)
+    ],
   ];
-  for (const [label, score, refScore, valStr, refStr] of rows) {
+
+  for (const [label, score, caxiasScore, poaScore, valStr, caxiasStr, poaStr] of rows) {
     const row = el("div", { class: "iqm-bar-row" });
+
     row.append(el("div", { class: "label" }, label));
+
     const track = el("div", { class: "track" });
-    if (refScore != null) {
-      track.append(el("div", { class: "fill poa", style: `width:${refScore}%` }));
+
+    if (poaScore != null) {
+      track.append(el("div", { class: "fill poa", style: `width:${poaScore}%` }));
     }
+
+    if (caxiasScore != null) {
+      track.append(el("div", { class: "fill caxias", style: `width:${caxiasScore}%` }));
+    }
+
     track.append(el("div", { class: "fill", style: `width:${score}%` }));
+
     row.append(track);
     row.append(el("div", { class: "val" }, valStr));
-    row.append(el("div", { class: "ref" }, `POA: ${refStr}`));
+    row.append(el("div", { class: "ref" }, `Caxias: ${caxiasStr} · POA: ${poaStr}`));
+
     bars.append(row);
   }
 
-  // 4) Bubble chart regional
-  // Pontos = municípios da microrregião
-  // X = beneficiários médico-hospitalares por leito privado
-  // Y = taxa de cobertura ANS
-  // Tamanho = PIB municipal
   try {
     const points = await buildRegionalBubblePoints({
       cityIbge,
@@ -2674,4 +2862,3 @@ function renderBubbleChart(points) {
     }],
   });
 }
-
