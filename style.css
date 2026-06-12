@@ -1054,6 +1054,82 @@ body.print-executive .card:has(#city-services-table) {
   word-break: normal !important;
   overflow-wrap: normal !important;
 }
+
+/* ===== Ajustes finais do PDF executivo ===== */
+
+/* Página 1: manter tabela de operadoras da microrregião */
+body.print-executive .card:has(#micro-ops-table) {
+  display: block !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  margin-bottom: 4mm !important;
+}
+
+body.print-executive #micro-ops-table {
+  font-size: 7.8pt !important;
+}
+
+body.print-executive #micro-ops-table th,
+body.print-executive #micro-ops-table td {
+  padding: 4px 5px !important;
+  line-height: 1.15 !important;
+}
+
+/* CIDADE começa em nova página */
+body.print-executive .tab-panel[data-panel="cidade"],
+body.print-executive .tab-panel[data-panel="city"] {
+  display: flex !important;
+  flex-direction: column !important;
+  break-before: page !important;
+  page-break-before: always !important;
+}
+
+/* Título CIDADE no topo da página 2 */
+body.print-executive .tab-panel[data-panel="cidade"]::before,
+body.print-executive .tab-panel[data-panel="city"]::before {
+  order: 0 !important;
+  margin-bottom: 5mm !important;
+}
+
+/* Reorganizar a folha 2: perfil da cidade logo abaixo do título */
+body.print-executive .tab-panel[data-panel="cidade"] > *,
+body.print-executive .tab-panel[data-panel="city"] > * {
+  order: 20;
+}
+
+body.print-executive .tab-panel[data-panel="cidade"] .card:has(#city-profile),
+body.print-executive .tab-panel[data-panel="city"] .card:has(#city-profile) {
+  display: block !important;
+  order: 1 !important;
+  margin-bottom: 5mm !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
+body.print-executive .tab-panel[data-panel="cidade"] .card:has(#city-profile) .profile,
+body.print-executive .tab-panel[data-panel="city"] .card:has(#city-profile) .profile {
+  display: block !important;
+}
+
+body.print-executive .tab-panel[data-panel="cidade"] .card:has(#city-profile) .profile .line,
+body.print-executive .tab-panel[data-panel="city"] .card:has(#city-profile) .profile .line {
+  font-size: 8.4pt !important;
+  line-height: 1.22 !important;
+  padding: 4px 6px !important;
+  margin-bottom: 3px !important;
+}
+
+/* Depois do perfil, entram os KPIs da cidade */
+body.print-executive .tab-panel[data-panel="cidade"] .kpis,
+body.print-executive .tab-panel[data-panel="city"] .kpis {
+  order: 2 !important;
+}
+
+/* Manter a tabela de operadoras da cidade escondida no executivo */
+body.print-executive .card:has(#city-ops-table) {
+  display: none !important;
+}
+
   
   .foot {
     display: none !important;
