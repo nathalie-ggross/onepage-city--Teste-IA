@@ -158,6 +158,55 @@ const monthLabel = ym => {
   return `${MESES[Number(ym.slice(4,6)) - 1]}/${ym.slice(0,4)}`;
 };
 
+function renderIQM2025(microrregiaoNome) {
+  const valueEl = document.getElementById("city-iqm-2025-value");
+  const classEl = document.getElementById("city-iqm-2025-class");
+
+  if (!valueEl || !classEl) return;
+
+  let item = null;
+
+  try {
+    item = window.IQM_2025?.getByMicrorregiao?.(microrregiaoNome) || null;
+  } catch (e) {
+    console.warn("Falha ao consultar IQM_2025:", e);
+  }
+
+  if (!item && window.IQM_2025?.rows?.length) {
+    const normalize = window.IQM_2025?.normalizeKey || function(value) {
+      return String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[’'`´]/g, "")
+        .replace(/[-–—_/]+/g, " ")
+        .replace(/[^a-zA-Z0-9\s]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+    };
+
+    const target = normalize(microrregiaoNome);
+    item = window.IQM_2025.rows.find(r => normalize(r.microrregiao) === target) || null;
+  }
+
+  if (!item) {
+    valueEl.textContent = "N/D";
+    classEl.textContent = "Sem dado";
+    return;
+  }
+
+  const iqm = Number(item.iqm);
+
+  valueEl.textContent = Number.isFinite(iqm)
+    ? iqm.toLocaleString("pt-BR", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1
+      })
+    : "N/D";
+
+  classEl.textContent = item.classificacao || "—";
+}
+
 function showLoader(msg) { $("#loader-msg").textContent = msg || "Carregando dados…"; $("#loader").hidden = false; }
 function hideLoader() { $("#loader").hidden = true; }
 function showError(msg) { const e = $("#error"); e.textContent = msg; e.hidden = false; setTimeout(() => (e.hidden = true), 8000); }
@@ -620,10 +669,12 @@ window.scrollTo({ top: 0, behavior: "smooth" });
     state.micro.id = microId;
     state.micro.nome = microNome;
 
-    $("#city-title").textContent = `${loc.nome} — ${ufSigla}`;
-    $("#city-sub").textContent = `Microrregião de ${microNome} · Mesorregião ${mesor} · ${ufNome}`;
-    $$(".c-name").forEach(x => x.textContent = loc.nome);
-    $("#micro-title").textContent = `Microrregião de ${microNome}`;
+  $("#city-title").textContent = `${loc.nome} — ${ufSigla}`;
+  $("#city-sub").textContent = `Microrregião de ${microNome} · Mesorregião ${mesor} · ${ufNome}`;
+  $$(".c-name").forEach(x => x.textContent = loc.nome);
+  $("#micro-title").textContent = `Microrregião de ${microNome}`;
+
+  renderIQM2025(microNome);
 
     // 2) Lista de municípios da microrregião
     showLoader("Listando municípios da microrregião…");
