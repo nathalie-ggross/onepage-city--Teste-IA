@@ -1439,6 +1439,89 @@ body.print-executive img.print-snapshot {
   filter: contrast(1.22) saturate(0.9) !important;
 }
   
+
+
+/* ===== PDF executivo: ajuste final de compactação e histórico ===== */
+
+/* Se o histórico de leitos não tiver série suficiente, não imprimir uma página vazia. */
+body.print-executive .card.empty-history {
+  display: none !important;
+}
+
+/* Se houver série de leitos privados, permitir que o gráfico apareça no executivo. */
+body.print-executive .card:has(canvas#micro-leitos-priv-evol),
+body.print-executive .card:has(canvas#city-leitos-priv-evol) {
+  display: block !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
+/* KPIs mais compactos e sem espaços vazios desnecessários. */
+body.print-executive .kpis {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 1.8mm !important;
+  margin-bottom: 2.5mm !important;
+}
+
+body.print-executive .kpis.kpis-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+body.print-executive .kpis.kpis-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+body.print-executive .tab-panel[data-panel="micro"] .kpis:has(#micro-total-pop),
+body.print-executive .tab-panel[data-panel="micro"] .kpis:has(#micro-ans-total) {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+body.print-executive .tab-panel[data-panel="micro"] .kpis:has(#micro-leitos-tot),
+body.print-executive .tab-panel[data-panel="cidade"] .kpis:has(#city-pop),
+body.print-executive .tab-panel[data-panel="city"] .kpis:has(#city-pop),
+body.print-executive .tab-panel[data-panel="cidade"] .kpis:has(#city-leitos-tot),
+body.print-executive .tab-panel[data-panel="city"] .kpis:has(#city-leitos-tot) {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
+body.print-executive .kpi {
+  min-height: 35px !important;
+  padding: 4px 6px !important;
+  border-radius: 5px !important;
+  gap: 1px !important;
+}
+
+body.print-executive .kpi .k-label {
+  font-size: 7.5pt !important;
+  line-height: 1.05 !important;
+  letter-spacing: 0.1px !important;
+}
+
+body.print-executive .kpi .k-val {
+  font-size: 13.2pt !important;
+  line-height: 1.02 !important;
+}
+
+body.print-executive .kpi.big .k-val {
+  font-size: 15pt !important;
+}
+
+body.print-executive .kpi .k-compare {
+  font-size: 7.1pt !important;
+  line-height: 1.08 !important;
+  padding-top: 2px !important;
+  margin-top: 2px !important;
+}
+
+/* Benchmark mais baixo para evitar empurrar a microrregião para outra folha. */
+body.print-executive .card:has(canvas#city-bubble) .chart-wrap {
+  height: 48mm !important;
+}
+
+body.print-executive .card:has(canvas#city-bubble) {
+  margin-bottom: 3mm !important;
+}
+
   .foot {
     display: none !important;
   }
