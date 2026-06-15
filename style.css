@@ -1561,305 +1561,11 @@ body.print-executive .card:has(canvas#city-bubble) .muted {
   }
 }
 
-/* ================= IQM 2025 ================= */
 
-.iqm-footer-line {
-  display: grid;
-  grid-template-columns: 190px 1fr;
-  column-gap: 14px;
-  align-items: center;
-  margin-top: 6px;
-}
-
-.iqm-2025-box {
-  height: 42px;
-  padding: 5px 10px;
-  border-radius: 8px;
-  background: #243b73;
-  color: #ffffff;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
-  column-gap: 8px;
-  align-items: center;
-  box-sizing: border-box;
-}
-
-.iqm-2025-label {
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.05;
-  opacity: 0.9;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.iqm-2025-value {
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1;
-  text-align: right;
-}
-
-.iqm-2025-class {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
-  text-align: right;
-  opacity: 0.9;
-}
-
-.iqm-composition-note {
-  margin: 0;
-  font-size: 9.5px;
-  line-height: 1.22;
-  text-align: left;
-}
-
-/* Ajuste para PDF executivo */
-@media print {
-  .iqm-footer-line {
-    grid-template-columns: 175px 1fr;
-    column-gap: 10px;
-    margin-top: 4px;
-  }
-
-  .iqm-2025-box {
-    height: 36px;
-    padding: 4px 8px;
-    border-radius: 6px;
-  }
-
-  .iqm-2025-label {
-    font-size: 8.5px;
-  }
-
-  .iqm-2025-value {
-    font-size: 17px;
-  }
-
-  .iqm-2025-class {
-    font-size: 8.5px;
-  }
-
-  .iqm-composition-note {
-    font-size: 8.5px;
-    line-height: 1.15;
-  }
-}
-/* ================= AJUSTE FINO IQM ================= */
-
-.iqm-card {
-  padding: 12px 14px;
-}
-
-.iqm-card h3 {
-  margin: 0 0 8px 0;
-  font-size: 14px;
-  line-height: 1.15;
-}
-
-.iqm-wrap {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  column-gap: 14px;
-  align-items: start;
-}
-
-.iqm-score {
-  min-height: 168px;
-  padding: 12px 10px 10px;
-  border-radius: 10px;
-  box-sizing: border-box;
-}
-
-.iqm-val {
-  font-size: 62px;
-  line-height: 1;
-}
-
-.iqm-scale {
-  font-size: 13px;
-  line-height: 1;
-}
-
-.iqm-tier {
-  margin-top: 4px;
-  font-size: 11px;
-  padding: 5px 12px;
-}
-
-.iqm-refbox {
-  margin-top: 10px;
-  font-size: 12px;
-  line-height: 1.25;
-}
-
-.iqm-refbox span {
-  display: block;
-}
-
-.iqm-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.iqm-bar-row {
-  display: grid;
-  grid-template-columns: 220px 1fr 72px 125px;
-  column-gap: 8px;
-  align-items: center;
-}
-
-.iqm-bar-row .label {
-  font-size: 11px;
-  line-height: 1.1;
-}
-
-.iqm-bar-row .track {
-  height: 8px;
-  border-radius: 999px;
-}
-
-.iqm-bar-row .val {
-  font-size: 11px;
-  font-weight: 700;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.iqm-bar-row .ref {
-  font-size: 10px;
-  line-height: 1.15;
-}
-
-.iqm-footer-line {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  column-gap: 14px;
-  align-items: center;
-  margin-top: 6px;
-}
-
-.iqm-2025-box {
-  width: 100%;
-  min-height: 40px;
-  padding: 5px 10px;
-  border-radius: 8px;
-  box-sizing: border-box;
-}
-
-.iqm-2025-label {
-  font-size: 10px;
-}
-
-.iqm-2025-value {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.iqm-2025-class {
-  font-size: 10px;
-  line-height: 1;
-}
-
-.iqm-composition-note {
-  margin: 0;
-  font-size: 9px;
-  line-height: 1.15;
-}
-
-/* impressão / pdf */
-@media print {
-  .iqm-card {
-    padding: 10px 12px;
-  }
-
-  .iqm-card h3 {
-    margin-bottom: 6px;
-    font-size: 13px;
-  }
-
-  .iqm-wrap {
-    grid-template-columns: 205px 1fr;
-    column-gap: 12px;
-  }
-
-  .iqm-score {
-    min-height: 154px;
-    padding: 10px 9px 9px;
-  }
-
-  .iqm-val {
-    font-size: 56px;
-  }
-
-  .iqm-tier {
-    font-size: 10px;
-    padding: 4px 10px;
-  }
-
-  .iqm-refbox {
-    margin-top: 8px;
-    font-size: 11px;
-  }
-
-  .iqm-bars {
-    gap: 5px;
-  }
-
-  .iqm-bar-row {
-    grid-template-columns: 205px 1fr 66px 118px;
-    column-gap: 7px;
-  }
-
-  .iqm-bar-row .label {
-    font-size: 10.5px;
-  }
-
-  .iqm-bar-row .track {
-    height: 7px;
-  }
-
-  .iqm-bar-row .val {
-    font-size: 10.5px;
-  }
-
-  .iqm-bar-row .ref {
-    font-size: 9px;
-    line-height: 1.1;
-  }
-
-  .iqm-footer-line {
-    grid-template-columns: 205px 1fr;
-    column-gap: 12px;
-    margin-top: 5px;
-  }
-
-  .iqm-2025-box {
-    min-height: 34px;
-    padding: 4px 8px;
-  }
-
-  .iqm-2025-value {
-    font-size: 16px;
-  }
-
-  .iqm-2025-class,
-  .iqm-2025-label,
-  .iqm-composition-note {
-    font-size: 8.5px;
-  }
-}
-
-/* ================= IQM — ajuste fino para impressão ================= */
+/* =========================================================
+ * HOTFIX FINAL - IQM + impressão executiva
+ * Mantém apenas uma camada de override no final do CSS.
+ * ========================================================= */
 
 .iqm-card {
   padding: 10px 12px;
@@ -1878,7 +1584,6 @@ body.print-executive .card:has(canvas#city-bubble) .muted {
   align-items: stretch;
 }
 
-/* caixa principal da esquerda */
 .iqm-score {
   height: 118px;
   min-height: 118px;
@@ -1887,12 +1592,17 @@ body.print-executive .card:has(canvas#city-bubble) .muted {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 3px;
+  overflow: hidden;
 }
 
 .iqm-val {
   font-size: 56px;
-  line-height: 1;
+  line-height: 0.95;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
 }
 
 .iqm-scale {
@@ -1901,22 +1611,21 @@ body.print-executive .card:has(canvas#city-bubble) .muted {
 }
 
 .iqm-tier {
-  margin-top: 4px;
+  margin-top: 2px;
   font-size: 10px;
   padding: 4px 10px;
 }
 
 .iqm-refbox {
-  margin-top: 8px;
-  font-size: 11px;
-  line-height: 1.15;
+  margin-top: 6px;
+  font-size: 10.5px;
+  line-height: 1.12;
 }
 
 .iqm-refbox span {
   display: block;
 }
 
-/* bloco das barras: mesma altura útil da caixa da esquerda */
 .iqm-bars {
   height: 118px;
   min-height: 118px;
@@ -1947,7 +1656,7 @@ body.print-executive .card:has(canvas#city-bubble) .muted {
 
 .iqm-bar-row .val {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1;
   text-align: right;
   white-space: nowrap;
@@ -1959,7 +1668,6 @@ body.print-executive .card:has(canvas#city-bubble) .muted {
   text-align: right;
 }
 
-/* faixa inferior */
 .iqm-footer-line {
   display: grid;
   grid-template-columns: 220px 1fr;
@@ -1974,28 +1682,44 @@ body.print-executive .card:has(canvas#city-bubble) .muted {
   min-height: 30px;
   padding: 3px 8px;
   border-radius: 7px;
+  background: #243b73;
+  color: #ffffff;
   box-sizing: border-box;
-
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto auto;
   column-gap: 6px;
   align-items: center;
+  overflow: hidden;
 }
 
 .iqm-2025-label {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
   font-size: 9px;
+  font-weight: 800;
   line-height: 1;
+  opacity: 0.9;
+  text-transform: uppercase;
 }
 
 .iqm-2025-value {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
   font-size: 17px;
+  font-weight: 900;
   line-height: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .iqm-2025-class {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
   font-size: 9px;
+  font-weight: 800;
   line-height: 1;
+  text-align: right;
 }
 
 .iqm-composition-note {
@@ -2005,107 +1729,185 @@ body.print-executive .card:has(canvas#city-bubble) .muted {
   text-align: left;
 }
 
-/* ================= impressão ================= */
-
 @media print {
-  .iqm-card {
-    padding: 9px 10px;
+  body.print-executive .iqm-card {
+    padding: 7px 8px !important;
+    margin-bottom: 3mm !important;
+    border: 0.8px solid #6b7280 !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
   }
 
-  .iqm-card h3 {
-    margin: 0 0 4px 0;
-    font-size: 12.5px;
-    line-height: 1.05;
+  body.print-executive .iqm-card h3 {
+    margin: 0 0 3px 0 !important;
+    font-size: 10.5pt !important;
+    line-height: 1.05 !important;
+    color: #000 !important;
   }
 
-  .iqm-wrap {
-    grid-template-columns: 205px 1fr;
-    column-gap: 10px;
+  body.print-executive .iqm-wrap {
+    display: grid !important;
+    grid-template-columns: 130px 1fr !important;
+    column-gap: 8px !important;
+    align-items: stretch !important;
   }
 
-  .iqm-score {
-    height: 108px;
-    min-height: 108px;
-    padding: 8px 8px 7px;
+  body.print-executive .iqm-score {
+    width: 130px !important;
+    height: 88px !important;
+    min-height: 88px !important;
+    padding: 6px 6px 5px !important;
+    border-radius: 6px !important;
+    background: #0b1220 !important;
+    color: #fff !important;
+    gap: 1px !important;
+    overflow: hidden !important;
   }
 
-  .iqm-val {
-    font-size: 50px;
+  body.print-executive .iqm-val {
+    display: block !important;
+    font-size: 30pt !important;
+    line-height: 0.9 !important;
+    color: #fff !important;
+    font-weight: 950 !important;
   }
 
-  .iqm-scale {
-    font-size: 11px;
+  body.print-executive .iqm-scale {
+    display: block !important;
+    font-size: 7.5pt !important;
+    line-height: 1 !important;
+    color: rgba(255,255,255,0.85) !important;
   }
 
-  .iqm-tier {
-    margin-top: 3px;
-    font-size: 9px;
-    padding: 3px 8px;
+  body.print-executive .iqm-tier {
+    display: inline-block !important;
+    margin-top: 2px !important;
+    padding: 2px 7px !important;
+    font-size: 7.3pt !important;
+    line-height: 1 !important;
+    color: #fff !important;
+    background: rgba(255,255,255,0.16) !important;
   }
 
-  .iqm-refbox {
-    margin-top: 7px;
-    font-size: 10px;
-    line-height: 1.1;
+  body.print-executive .iqm-refbox {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1px !important;
+    margin-top: 4px !important;
+    font-size: 6.7pt !important;
+    line-height: 1.05 !important;
+    color: #fff !important;
+    text-align: center !important;
   }
 
-  .iqm-bars {
-    height: 108px;
-    min-height: 108px;
-    padding: 0;
+  body.print-executive .iqm-refbox strong {
+    color: #fff !important;
+    font-size: 7.2pt !important;
   }
 
-  .iqm-bar-row {
-    grid-template-columns: 140px 1fr 54px 86px;
-    column-gap: 5px;
-    min-height: 16px;
+  body.print-executive .iqm-bars {
+    height: 88px !important;
+    min-height: 88px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
-  .iqm-bar-row .label {
-    font-size: 9.5px;
-    line-height: 1.02;
+  body.print-executive .iqm-bar-row {
+    display: grid !important;
+    grid-template-columns: 95px 1fr 42px 70px !important;
+    column-gap: 4px !important;
+    align-items: center !important;
+    min-height: 14px !important;
+    font-size: 7.1pt !important;
+    line-height: 1 !important;
+    color: #000 !important;
   }
 
-  .iqm-bar-row .track {
-    height: 6px;
+  body.print-executive .iqm-bar-row .label {
+    font-size: 6.9pt !important;
+    line-height: 1 !important;
+    color: #000 !important;
+    font-weight: 800 !important;
   }
 
-  .iqm-bar-row .val {
-    font-size: 9.5px;
+  body.print-executive .iqm-bar-row .track {
+    height: 5px !important;
+    border-radius: 999px !important;
+    border: 0.6px solid #6b7280 !important;
+    background: #eef1f5 !important;
   }
 
-  .iqm-bar-row .ref {
-    font-size: 8px;
-    line-height: 1;
+  body.print-executive .iqm-bar-row .val {
+    font-size: 7pt !important;
+    line-height: 1 !important;
+    color: #000 !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+    font-weight: 900 !important;
   }
 
-  .iqm-footer-line {
-    grid-template-columns: 205px 1fr;
-    column-gap: 10px;
-    margin-top: 2px;
+  body.print-executive .iqm-bar-row .ref {
+    font-size: 5.9pt !important;
+    line-height: 1 !important;
+    color: #111827 !important;
+    text-align: right !important;
   }
 
-  .iqm-2025-box {
-    height: 26px;
-    min-height: 26px;
-    padding: 2px 6px;
-    border-radius: 6px;
+  body.print-executive .iqm-footer-line {
+    display: grid !important;
+    grid-template-columns: 130px 1fr !important;
+    column-gap: 8px !important;
+    align-items: center !important;
+    margin-top: 2px !important;
   }
 
-  .iqm-2025-label {
-    font-size: 8px;
+  body.print-executive .iqm-2025-box {
+    width: 130px !important;
+    height: 21px !important;
+    min-height: 21px !important;
+    padding: 2px 5px !important;
+    border-radius: 4px !important;
+    background: #243b73 !important;
+    color: #fff !important;
   }
 
-  .iqm-2025-value {
-    font-size: 15px;
+  body.print-executive .iqm-2025-label {
+    font-size: 5.7pt !important;
+    line-height: 1 !important;
+    color: #fff !important;
   }
 
-  .iqm-2025-class {
-    font-size: 8px;
+  body.print-executive .iqm-2025-value {
+    font-size: 10.5pt !important;
+    line-height: 0.9 !important;
+    color: #fff !important;
   }
 
-  .iqm-composition-note {
-    font-size: 8px;
-    line-height: 1.02;
+  body.print-executive .iqm-2025-class {
+    font-size: 5.7pt !important;
+    line-height: 1 !important;
+    color: #fff !important;
+  }
+
+  body.print-executive .iqm-composition-note {
+    margin: 0 !important;
+    font-size: 6.2pt !important;
+    line-height: 1.05 !important;
+    color: #111827 !important;
+  }
+
+  body.print-executive .card,
+  body.print-executive .kpi,
+  body.print-executive .hero {
+    border-width: 0.8px !important;
+    border-color: #6b7280 !important;
+    border-radius: 6px !important;
+  }
+
+  body.print-executive .card:has(canvas#city-bubble) .chart-wrap {
+    height: 60mm !important;
   }
 }
