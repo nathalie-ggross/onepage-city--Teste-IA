@@ -383,6 +383,15 @@ function restoreAllCharts() {
 
 function runPrint(mode = "detailed") {
   try {
+    const iqmMain = document.getElementById("city-iqm-value");
+    const bubbleCanvas = document.getElementById("city-bubble");
+    const dashboardVisible = document.getElementById("dashboard") && !document.getElementById("dashboard").hidden;
+
+    if (dashboardVisible && iqmMain && iqmMain.textContent.trim() === "—") {
+      alert("Aguarde o carregamento completo do IQM antes de gerar o PDF.");
+      return;
+    }
+
     document.body.classList.remove("print-executive", "print-detailed");
 
     if (mode === "executive") {
@@ -900,8 +909,8 @@ renderPOAReferences(poaRef, {
   leitosTotais: leitosCaxiasRef?.totais || null,
 });
 
-    // IQM e bubble chart (assíncrono — não bloqueia o resto)
-renderIQMandBubble({
+    // IQM e bubble chart — precisa concluir antes de liberar impressão
+await renderIQMandBubble({
   cityIbge: String(ibgeId),
   cityName: loc.nome,
   cityUF: ufSigla,
