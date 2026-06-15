@@ -20,13 +20,13 @@ const CAXIAS_IBGE = "4305108";
 const CAXIAS_CNES = "430510";
 
 const COLORS = {
-  ink: "#0b1220",
-  brand: "#1a3566",
-  brand2: "#274a8a",
-  gray1: "#2a3246",
-  gray2: "#8a93a3",
-  male: "#1a3566",
-  female: "#8a93a3",
+  ink: "#000000",
+  brand: "#0b1220",
+  brand2: "#1f2937",
+  gray1: "#111827",
+  gray2: "#4b5563",
+  male: "#0b1220",
+  female: "#4b5563",
 };
 
 const AGE_GROUPS = [
