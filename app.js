@@ -534,6 +534,25 @@ function renderPOAReferences(ref, caxias = null) {
   }
 }
 
+function totalMedicosFromPayload(data) {
+  if (!data) return null;
+
+  const candidates = [
+    data.total,
+    data.total_medicos,
+    data.medicos_total,
+    data.qtd_medicos,
+    data.quantidade,
+  ];
+
+  for (const value of candidates) {
+    const n = Number(value);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+
+  return null;
+}
+
 function renderMedicosHabitantesKPI({
   cidade,
   caxias,
@@ -547,15 +566,17 @@ function renderMedicosHabitantesKPI({
     if (node) node.textContent = value;
   };
 
-  const ratio = (medicos, populacao) => {
-    medicos = Number(medicos) || 0;
+  const ratio = (payloadMedicos, populacao) => {
+    const medicos = totalMedicosFromPayload(payloadMedicos);
     populacao = Number(populacao) || 0;
-    return populacao ? (medicos / populacao) * 10000 : null;
+
+    if (!medicos || !populacao) return null;
+    return (medicos / populacao) * 10000;
   };
 
-  const cityVal = ratio(cidade?.total, popCidade);
-  const caxiasVal = ratio(caxias?.total, popCaxias);
-  const poaVal = ratio(poa?.total, popPoa);
+  const cityVal = ratio(cidade, popCidade);
+  const caxiasVal = ratio(caxias, popCaxias);
+  const poaVal = ratio(poa, popPoa);
 
   set("city-medxbenef", fmt1(cityVal));
 
@@ -564,16 +585,15 @@ function renderMedicosHabitantesKPI({
     const parent = node.closest(".k-compare") || node.parentElement;
 
     if (parent) {
-      parent.innerHTML = `Caxias: <strong>${fmt1(caxiasVal)}</strong> · POA: <strong id="ref-city-medxbenef">${fmt1(poaVal)}</strong>`;
+      parent.innerHTML =
+        `Caxias: <strong>${fmt1(caxiasVal)}</strong> · POA: <strong id="ref-city-medxbenef">${fmt1(poaVal)}</strong>`;
     } else {
       node.textContent = fmt1(poaVal);
     }
   }
 }
 
-
-
-
+ 
 /* ===== Orchestrator ===== */
 async function selectCity(ibgeId, name, uf) {
   $("#suggestions").hidden = true;
@@ -1338,17 +1358,44 @@ function renderPyramid(scope, pyramid) {
     options: {
       indexAxis: "y",
       maintainAspectRatio: false,
-      scales: {
-        x: {
-          min: -maxAbs,
-          max: maxAbs,
-          ticks: { callback: v => fmt(Math.abs(v)) },
-        },
-        y: {
-          stacked: true,
-          ticks: { autoSkip: false, font: { size: 10.5 } },
-        },
-      },
+  scales: {
+  x: {
+    min: -maxAbs,
+    max: maxAbs,
+    ticks: {
+      callback: v => fmt(Math.abs(v)),
+      color: "#000000",
+      font: {
+        size: 11,
+        weight: "700"
+      }
+    },
+    grid: {
+      color: "#9ca3af"
+    },
+    border: {
+      color: "#000000",
+      width: 1.2
+    }
+  },
+  y: {
+    grid: {
+      display: false
+    },
+    ticks: {
+      color: "#000000",
+      font: {
+        size: 11,
+        weight: "700"
+      }
+    },
+    border: {
+      color: "#000000",
+      width: 1.2
+    }
+  }
+},
+     
       plugins: {
         legend: { position: "bottom" },
         tooltip: {
@@ -2862,27 +2909,63 @@ function renderBubbleChart(points) {
           show: true,
         },
       },
-      scales: {
+          scales: {
         x: {
           ...xScale,
           title: {
             display: true,
             text: "Beneficiários médico-hospitalares por leito privado (maior = maior pressão)",
+            color: "#000000",
+            font: {
+              size: 12,
+              weight: "800"
+            }
           },
           ticks: {
-            callback: v => fmt(v),
+            color: "#000000",
+            font: {
+              size: 11,
+              weight: "700"
+            },
+            callback: v => fmt(v)
           },
+          grid: {
+            color: "#6b7280",
+            lineWidth: 0.8
+          },
+          border: {
+            color: "#000000",
+            width: 1.4
+          }
         },
         y: {
           ...yScale,
           title: {
             display: true,
             text: "Taxa de cobertura de planos de saúde (% da população)",
+            color: "#000000",
+            font: {
+              size: 12,
+              weight: "800"
+            }
           },
           ticks: {
-            callback: v => `${fmt1(v)}%`,
+            color: "#000000",
+            font: {
+              size: 11,
+              weight: "700"
+            },
+            callback: v => `${fmt1(v)}%`
           },
-        },
+          grid: {
+            color: "#6b7280",
+            lineWidth: 0.8
+          },
+          border: {
+            color: "#000000",
+            width: 1.4
+          }
+        }
       },
     },
     plugins: [{
