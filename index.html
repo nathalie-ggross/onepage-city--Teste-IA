@@ -78,18 +78,31 @@
     </div>
 
     <!-- ================= RESUMO ESTRATÉGICO ================= -->
-      <div class="card iqm-card">
-        <h3>IQM — Índice de Qualidade de Mercado</h3>
-        <div class="iqm-wrap">
-          <div class="iqm-score">
-            <span id="city-iqm-value" class="iqm-val">—</span>
-            <span class="iqm-scale">/ 100</span>
-            <span id="city-iqm-tier" class="iqm-tier">—</span>
-          </div>
-          <div id="city-iqm-bars" class="iqm-bars"></div>
-        </div>
-        <p class="muted">Composto: cobertura ANS (30%), renda A+B (25%), crescimento populacional (15%), hospitais por 100k hab. (15%) e disponibilidade de leitos privados por beneficiário (15%). Comparativo: Porto Alegre.</p>
-      </div>
+     <div class="card iqm-card">
+  <h3>IQM | Índice de Qualidade de Mercado</h3>
+
+  <div class="iqm-wrap">
+    <div class="iqm-score">
+      <span id="city-iqm-value" class="iqm-val">—</span>
+      <span class="iqm-scale">/ 100</span>
+      <span id="city-iqm-tier" class="iqm-tier">—</span>
+    </div>
+
+    <div id="city-iqm-bars" class="iqm-bars"></div>
+  </div>
+
+  <div class="iqm-footer-line">
+    <div class="iqm-2025-box">
+      <span class="iqm-2025-label">IQM 2025</span>
+      <span id="city-iqm-2025-value" class="iqm-2025-value">—</span>
+      <span id="city-iqm-2025-class" class="iqm-2025-class">—</span>
+    </div>
+
+    <p class="muted iqm-composition-note">
+      Composto: cobertura ANS (30%), renda A+B (25%), crescimento populacional (15%), hospitais por 100k hab. (15%) e disponibilidade de leitos privados por beneficiário (15%). Comparativo: Porto Alegre.
+    </p>
+  </div>
+</div>
 
       <div class="card">
         <h3>Benchmark regional — cobertura, pressão assistencial e PIB</h3>
@@ -489,6 +502,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js?v=46"></script>
+<script src="./iqm-2025.js?v=1"></script>
+<script src="app.js?v=47"></script>
 </body>
 </html>
