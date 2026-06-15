@@ -534,28 +534,28 @@ function renderPOAReferences(ref, caxias = null) {
   }
 }
 
-function renderMedicosBeneficiariosKPI({
+function renderMedicosHabitantesKPI({
   cidade,
   caxias,
   poa,
-  ansCidade,
-  ansCaxiasTotal,
-  ansPoaTotal
+  popCidade,
+  popCaxias,
+  popPoa
 }) {
   const set = (id, value) => {
     const node = document.getElementById(id);
     if (node) node.textContent = value;
   };
 
-  const ratio = (medicos, beneficiarios) => {
+  const ratio = (medicos, populacao) => {
     medicos = Number(medicos) || 0;
-    beneficiarios = Number(beneficiarios) || 0;
-    return beneficiarios ? (medicos / beneficiarios) * 10000 : null;
+    populacao = Number(populacao) || 0;
+    return populacao ? (medicos / populacao) * 10000 : null;
   };
 
-  const cityVal = ratio(cidade?.total, ansCidade?.total);
-  const caxiasVal = ratio(caxias?.total, ansCaxiasTotal);
-  const poaVal = ratio(poa?.total, ansPoaTotal);
+  const cityVal = ratio(cidade?.total, popCidade);
+  const caxiasVal = ratio(caxias?.total, popCaxias);
+  const poaVal = ratio(poa?.total, popPoa);
 
   set("city-medxbenef", fmt1(cityVal));
 
@@ -570,6 +570,10 @@ function renderMedicosBeneficiariosKPI({
     }
   }
 }
+
+
+
+
 /* ===== Orchestrator ===== */
 async function selectCity(ibgeId, name, uf) {
   $("#suggestions").hidden = true;
@@ -786,13 +790,13 @@ renderMedicalDensityTable({
   popPoa: refPopByCity[POA_IBGE] || null,
 });
 
-renderMedicosBeneficiariosKPI({
+renderMedicosHabitantesKPI({
   cidade: medicosCity,
   caxias: medicosCaxias,
   poa: medicosPOA,
-  ansCidade: ansCity,
-  ansCaxiasTotal: ansCaxiasRef?.total || null,
-  ansPoaTotal: poaRef?.city?.ansTotal || null,
+  popCidade: cityPop,
+  popCaxias: refPopByCity[CAXIAS_IBGE] || null,
+  popPoa: refPopByCity[POA_IBGE] || null,
 });
 
 renderTypesTable("city", estabsCity, estabsCaxias, estabsPOA, {
