@@ -2449,3 +2449,144 @@ body.print-executive .card:has(canvas#city-bubble) .muted {
     display: none !important;
   }
 }
+
+/* ===== HOTFIX 16-06: IQM mais legível na impressão executiva =====
+   Objetivo: aumentar apenas o bloco do IQM no PDF, sem alterar a tela.
+   Mantém a primeira página fechando com o gráfico de evolução dos leitos privados. */
+@media print {
+  body.print-executive .iqm-card {
+    padding: 7px 9px 8px !important;
+    margin-bottom: 3mm !important;
+    min-height: 34mm !important;
+  }
+
+  body.print-executive .iqm-card h3 {
+    font-size: 9.4pt !important;
+    line-height: 1.1 !important;
+    margin-bottom: 5px !important;
+  }
+
+  body.print-executive .iqm-wrap {
+    display: grid !important;
+    grid-template-columns: 150px 1fr !important;
+    gap: 7px !important;
+    align-items: stretch !important;
+  }
+
+  body.print-executive .iqm-score {
+    min-height: 25mm !important;
+    padding: 6px !important;
+  }
+
+  body.print-executive .iqm-val {
+    font-size: 29pt !important;
+    line-height: 0.95 !important;
+  }
+
+  body.print-executive .iqm-scale {
+    font-size: 7.2pt !important;
+    line-height: 1 !important;
+  }
+
+  body.print-executive .iqm-tier {
+    font-size: 7.2pt !important;
+    line-height: 1 !important;
+    padding: 2px 7px !important;
+    margin-top: 3px !important;
+  }
+
+  body.print-executive .iqm-refbox {
+    font-size: 6.2pt !important;
+    line-height: 1.05 !important;
+    gap: 1px !important;
+    margin-top: 4px !important;
+  }
+
+  body.print-executive .iqm-refbox strong {
+    font-size: 6.6pt !important;
+  }
+
+  body.print-executive .iqm-bars {
+    gap: 3.2px !important;
+  }
+
+  body.print-executive .iqm-bar-row {
+    grid-template-columns: 110px 1fr 44px 78px !important;
+    gap: 4px !important;
+    font-size: 7.1pt !important;
+    line-height: 1.05 !important;
+    min-height: 4.5mm !important;
+  }
+
+  body.print-executive .iqm-bar-row .track {
+    height: 2.6mm !important;
+  }
+
+  body.print-executive .iqm-bar-row .label {
+    font-size: 7.1pt !important;
+    line-height: 1.05 !important;
+  }
+
+  body.print-executive .iqm-bar-row .val {
+    font-size: 7.1pt !important;
+    line-height: 1.05 !important;
+  }
+
+  body.print-executive .iqm-bar-row .ref {
+    font-size: 6.2pt !important;
+    line-height: 1.05 !important;
+  }
+
+  body.print-executive .iqm-footer-line {
+    display: grid !important;
+    grid-template-columns: 120px 1fr !important;
+    gap: 6px !important;
+    align-items: center !important;
+    margin-top: 4px !important;
+  }
+
+  body.print-executive .iqm-2025-box {
+    min-height: 8mm !important;
+    padding: 2px 5px !important;
+  }
+
+  body.print-executive .iqm-2025-label {
+    font-size: 6.2pt !important;
+    line-height: 1 !important;
+  }
+
+  body.print-executive .iqm-2025-value {
+    font-size: 11.5pt !important;
+    line-height: 1 !important;
+  }
+
+  body.print-executive .iqm-2025-class {
+    font-size: 6pt !important;
+    line-height: 1 !important;
+  }
+
+  body.print-executive .iqm-composition-note {
+    font-size: 6.6pt !important;
+    line-height: 1.12 !important;
+    margin: 0 !important;
+  }
+
+  /* Compensação suave para manter tudo em uma página */
+  body.print-executive .card:has(canvas#city-bubble) .chart-wrap {
+    height: 78mm !important;
+  }
+
+  body.print-executive .card:has(canvas#micro-leitos-priv-evol) .chart-wrap {
+    height: 47mm !important;
+  }
+
+  body.print-executive .card:has(canvas#micro-leitos-priv-evol) {
+    margin-bottom: 0 !important;
+  }
+
+  body.print-executive .card:has(canvas#micro-leitos-priv-evol) .muted {
+    font-size: 6.4pt !important;
+    line-height: 1.05 !important;
+    margin-top: 1px !important;
+  }
+}
