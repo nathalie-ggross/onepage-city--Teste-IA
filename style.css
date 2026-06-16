@@ -1,29 +1,634 @@
-INSTRUÇÕES — AJUSTE V53
+/* Paleta: branco, preto, cinza, azul escuro */
+:root {
+  --bg: #f4f5f7;
+  --ink: #0b1220;
+  --ink-2: #2a3246;
+  --muted: #6b7380;
+  --brand: #1a3566;      /* azul escuro */
+  --brand-2: #274a8a;
+  --brand-ink: #0d1f42;
+  --border: #dde1ea;
+  --panel: #ffffff;
+  --panel-2: #f8f9fb;
+  --gray-1: #2a3246;
+  --gray-2: #8a93a3;
+  --gray-3: #c5cbd6;
+  --shadow: 0 1px 2px rgba(11,18,32,0.05), 0 6px 22px rgba(11,18,32,0.06);
+  --radius: 10px;
+  font-size: 15px;
+}
 
-Objetivo:
-Aumentar levemente as fontes da impressão executiva e usar melhor o espaço A4,
-mantendo a visualização online igual.
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+[hidden] { display: none !important; }
 
-Como aplicar:
-1. Abra o style.css.
-2. Mantenha o arquivo como está.
-3. Cole o bloco abaixo no FINAL do style.css, depois do BLOCO FINAL LIMPO.
-4. No index.html, atualize o cache para:
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
 
-<link rel="stylesheet" href="style.css?v=53">
+/* ---------- Topbar ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 20px;
+  padding: 14px 28px;
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(11, 34, 66, 0.25);
+}
+.brand { display:flex; align-items:center; gap: 12px; min-width: 260px; }
+.brand h1 { margin: 0; font-size: 17px; letter-spacing: 0.2px; font-weight: 700; }
+.brand .sub { margin: 2px 0 0; font-size: 12px; opacity: 0.82; }
+.logo {
+  width: 38px; height: 38px; border-radius: 8px; display:inline-flex;
+  align-items:center; justify-content:center;
+  background: #fff; color: var(--brand); font-weight: 900; letter-spacing: 0.5px;
+}
 
-5. Mantenha:
+.search-wrap { position: relative; flex: 1; max-width: 640px; }
+#search {
+  width: 100%; padding: 11px 16px; border-radius: 8px; border: 0;
+  background: #fff; color: var(--ink);
+  font-size: 15px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+}
+#search:focus { outline: 2px solid #fff; outline-offset: 2px; }
 
-<script src="./iqm-2025.js?v=1"></script>
-<script src="app.js?v=50"></script>
+.suggestions {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: #fff; color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px;
+  list-style: none; margin: 0; max-height: 320px; overflow: auto;
+  box-shadow: 0 14px 32px rgba(11,18,32,0.15);
+}
+.suggestions li {
+  padding: 9px 12px; border-radius: 6px; cursor: pointer;
+  display: flex; justify-content: space-between; gap: 8px; font-size: 14px;
+}
+.suggestions li:hover, .suggestions li.active { background: var(--panel-2); }
+.suggestions .uf { color: var(--muted); font-size: 12px; }
 
-BLOCO CSS
-=========
+.btn-ghost {
+  border: 1px solid rgba(255,255,255,0.4); background: transparent; color: #fff;
+  padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.12); }
+
+/* ---------- Landing ---------- */
+.landing {
+  max-width: 920px; margin: 80px auto; text-align: center; padding: 0 24px;
+}
+.landing h2 { font-size: 34px; margin: 0 0 14px; color: var(--ink); letter-spacing: -0.3px; }
+.landing p { color: var(--ink-2); font-size: 17px; line-height: 1.55; }
+.examples { margin-top: 28px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.examples span { color: var(--muted); font-size: 14px; }
+.example {
+  background: #fff; border: 1px solid var(--border); color: var(--brand);
+  padding: 9px 16px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 600;
+}
+.example:hover { background: var(--brand); border-color: var(--brand); color: #fff; }
+.landing-note { margin-top: 22px; color: var(--muted); font-size: 12.5px; max-width: 720px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+
+/* ---------- Dashboard ---------- */
+.dashboard { max-width: 1280px; margin: 24px auto 60px; padding: 0 24px; display: grid; gap: 14px; }
+
+.hero {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding: 18px 22px; background: #fff; border-radius: var(--radius);
+  box-shadow: var(--shadow); border: 1px solid var(--border);
+}
+.eyebrow { text-transform: uppercase; letter-spacing: 1.2px; color: var(--brand); font-size: 11px; margin: 0 0 4px; font-weight: 700; }
+#city-title { margin: 0; font-size: 30px; color: var(--ink); letter-spacing: -0.2px; }
+#city-sub { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+
+/* ---------- Tabs ---------- */
+.tabs {
+  display: flex; gap: 2px; padding: 4px;
+  background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.tab {
+  flex: 1; padding: 12px 16px; border: 0; background: transparent; cursor: pointer;
+  font-size: 14px; font-weight: 600; color: var(--muted); border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { background: var(--brand); color: #fff; }
+.tab-panel { display: none; flex-direction: column; gap: 14px; }
+.tab-panel.active { display: flex; }
+
+/* ---------- Cards ---------- */
+.card {
+  background: #fff; border-radius: var(--radius); padding: 18px 18px 20px;
+  box-shadow: var(--shadow); border: 1px solid var(--border);
+}
+.card h3 { margin: 0 0 14px; font-size: 15px; color: var(--ink); letter-spacing: 0.1px; font-weight: 700; }
+.card.pending { background: var(--panel-2); border-style: dashed; }
+.card.pending p { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.55; }
+.card.pending code { background: #fff; padding: 2px 6px; border-radius: 4px; font-size: 13px; border: 1px solid var(--border); }
+
+/* ---------- KPIs ---------- */
+.kpis {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+}
+.kpi {
+  background: #fff; border-radius: var(--radius); padding: 11px 13px;
+  box-shadow: var(--shadow); border: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 3px; min-height: 72px; justify-content: center;
+}
+.kpi.big { background: var(--brand); color: #fff; border-color: var(--brand); }
+.kpi.big .k-label { color: rgba(255,255,255,0.78); }
+.kpi.big .k-val { color: #fff; font-size: 26px; }
+.kpi .k-label { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+.kpi .k-val { font-size: 21px; font-weight: 800; color: var(--ink); }
+.kpi .k-compare {
+  font-size: 11px; color: var(--muted); margin-top: 4px;
+  padding-top: 4px; border-top: 1px dashed var(--border);
+}
+.kpi .k-compare strong { color: var(--brand); font-weight: 700; }
+.kpis.kpis-2 { grid-template-columns: repeat(2, 1fr); }
+.kpis.kpis-3 { grid-template-columns: repeat(3, 1fr); }
+.kpis.kpis-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 760px) {
+  .kpis.kpis-2, .kpis.kpis-3, .kpis.kpis-4 { grid-template-columns: 1fr; }
+}
+
+/* ---------- Grid ---------- */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* ---------- Charts ---------- */
+/* IMPORTANTE: Chart.js precisa que o `.chart-wrap` seja `position: relative`
+   com altura definida e SEM display:flex — caso contrário o canvas perde
+   dimensões e o gráfico some. Para centralizar visualmente, controlamos só
+   a largura no chart-wrap, e centralizamos verticalmente promovendo o CARD
+   (parent do chart-wrap) a flex column. */
+.chart-wrap { position: relative; height: 320px; }
+.chart-wrap.small {
+  position: relative;
+  height: 220px;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+.chart-wrap canvas { display: block; }
+
+/* Cards que contêm um doughnut pequeno (gênero, etc.): vira flex column para
+   centralizar verticalmente o conjunto chart+legenda quando o card é esticado
+   pelo grid-2 ao lado. O h3 fica no topo, o resto preenche e centraliza. */
+.card:has(> .chart-wrap.small) {
+  display: flex;
+  flex-direction: column;
+}
+.card:has(> .chart-wrap.small) > .chart-wrap.small {
+  margin-top: auto;
+}
+.card:has(> .chart-wrap.small) > .legend {
+  margin-bottom: auto;
+}
+/* Snapshot PNG sobreposto ao canvas durante a impressão */
+.chart-wrap img.print-snapshot,
+.card img.print-snapshot {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #fff;
+}
+.legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; font-size: 13px; }
+.legend .dot { display:inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+/* ---------- Tables ---------- */
+.table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.table th, .table td {
+  text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border);
+}
+.table th { background: var(--panel-2); color: var(--ink-2); font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.4px; }
+.table th.num, .table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table tbody tr:hover { background: var(--panel-2); }
+.table tfoot td { font-weight: 800; background: var(--brand-ink); color: #fff; }
+.table td.diff-pos { color: #1a7a4c; font-weight: 700; }
+.table td.diff-neg { color: #b03a1e; font-weight: 700; }
+.table-wrap { max-height: 460px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+.mini-search {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+  margin-bottom: 10px; font-size: 14px; background: #fff;
+}
+.muni-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.muni-list .chip {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--ink-2);
+  padding: 4px 10px; border-radius: 999px; font-size: 12.5px;
+}
+.muni-list .chip.current { background: var(--brand); color: #fff; border-color: var(--brand); font-weight: 600; }
+
+.muted { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+
+/* ---------- Map ---------- */
+.map { height: 420px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.map-sm { height: 280px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+
+/* ---------- IQM ---------- */
+.iqm-wrap {
+  display: grid; grid-template-columns: 220px 1fr; gap: 18px; align-items: center;
+}
+.iqm-score {
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff; border-radius: 10px; padding: 18px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 140px;
+}
+.iqm-val { font-size: 56px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.iqm-scale { font-size: 11px; opacity: 0.78; letter-spacing: 0.4px; text-transform: uppercase; }
+.iqm-tier {
+  margin-top: 6px; padding: 4px 12px; background: rgba(255,255,255,0.18);
+  border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+}
+.iqm-bars { display: flex; flex-direction: column; gap: 8px; }
+.iqm-bar-row { display: grid; grid-template-columns: 200px 1fr 70px 70px; gap: 10px; align-items: center; font-size: 12.5px; }
+.iqm-bar-row .label { color: var(--ink-2); font-weight: 600; }
+.iqm-bar-row .track { height: 10px; background: var(--panel-2); border-radius: 6px; overflow: hidden; position: relative; border: 1px solid var(--border); }
+.iqm-bar-row .fill { height: 100%; background: var(--brand); border-radius: 6px; transition: width 0.4s; }
+.iqm-bar-row .fill.poa { background: var(--gray-2); opacity: 0.7; position: absolute; top: 0; left: 0; }
+.iqm-refbox {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  line-height: 1.2;
+  color: rgba(255,255,255,0.82);
+  text-align: center;
+}
+
+.iqm-refbox strong {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.iqm-bar-row .track .fill.caxias {
+  background: rgba(46, 139, 87, 0.55);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+}
+
+.iqm-bar-row .track .fill.poa {
+  z-index: 1;
+}
+
+.iqm-bar-row .track .fill:not(.poa):not(.caxias) {
+  position: relative;
+  z-index: 3;
+}
+
+.iqm-bar-row .val { font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+.iqm-bar-row .ref { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+@media (max-width: 760px) {
+  .iqm-wrap { grid-template-columns: 1fr; }
+  .iqm-bar-row { grid-template-columns: 1fr 1fr 60px 60px; gap: 6px; }
+}
+
+/* ---------- Profile / Hospitals ---------- */
+.profile { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.profile .line {
+  padding: 10px 12px; background: var(--panel-2); border-radius: 8px;
+  border-left: 3px solid var(--brand); font-size: 14px; color: var(--ink-2);
+}
+.profile .line strong { color: var(--ink); }
+
+.hospitals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.hospital {
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px; display: flex; gap: 12px;
+}
+.hospital .photo {
+  width: 96px; height: 96px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 34px; font-weight: 800; flex-shrink: 0;
+}
+.hospital .info h4 { margin: 0 0 4px; font-size: 14.5px; }
+.hospital .info p { margin: 2px 0; font-size: 12.5px; color: var(--ink-2); }
+.hospital .tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+.hospital .tag {
+  background: #fff; border: 1px solid var(--border); color: var(--brand); font-size: 11px;
+  padding: 2px 8px; border-radius: 999px; font-weight: 600;
+}
+.hospital .leitos-summary {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+}
+.leito-badge {
+  font-size: 11.5px; padding: 3px 9px; border-radius: 6px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.leito-sus { background: var(--brand); color: #fff; }
+.leito-priv { background: var(--gray-2); color: #fff; }
+.leito-tot { background: var(--brand-ink); color: #fff; }
+.leito-uti { background: #d94a4a; color: #fff; }
+
+/* ---------- Top 3 Hospitais (Infraestrutura) ---------- */
+.top3 { display: grid; gap: 18px; }
+.top3-hospital {
+  display: grid; grid-template-columns: 280px 1fr; gap: 20px;
+  background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 18px;
+}
+.top3-photo {
+  height: 240px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.top3-photo::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.12) 0, transparent 40%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.08) 0, transparent 40%);
+}
+.top3-photo .rank {
+  position: absolute; top: 10px; left: 10px;
+  background: #fff; color: var(--brand); font-weight: 900; font-size: 18px;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.top3-photo .icon { font-size: 92px; opacity: 0.95; z-index: 1; }
+.top3-photo .name-strip {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 8px 12px; font-size: 12px; font-weight: 600;
+  background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
+  z-index: 1;
+}
+.top3-photo .photo-attr {
+  position: absolute; top: 8px; right: 10px;
+  font-size: 9.5px; color: #fff;
+  background: rgba(0,0,0,0.55); padding: 2px 8px; border-radius: 4px;
+  z-index: 1; letter-spacing: 0.2px;
+}
+.top3-body h4 { margin: 0 0 2px; font-size: 18px; color: var(--ink); }
+.top3-body .sub-info { margin: 0 0 4px; color: var(--muted); font-size: 13px; }
+.top3-body .unit-note { color: var(--brand); font-weight: 600; margin-bottom: 10px; font-size: 12px; }
+.top3-stats {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;
+}
+.top3-stat {
+  background: var(--panel-2); border-radius: 8px; padding: 10px; text-align: center; border: 1px solid var(--border);
+}
+.top3-stat .label { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); font-weight: 600; }
+.top3-stat .value { display: block; font-size: 22px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+.top3-stat.sus { background: var(--brand); color: #fff; border-color: var(--brand); }
+.top3-stat.sus .label, .top3-stat.sus .value { color: #fff; }
+
+.top3-section { margin-top: 12px; }
+.top3-section h5 {
+  margin: 0 0 6px; font-size: 11.5px; text-transform: uppercase; color: var(--muted);
+  letter-spacing: 0.4px; font-weight: 700;
+}
+.leito-type-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.leito-type {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--ink-2);
+  font-size: 11.5px; padding: 4px 9px; border-radius: 6px; font-weight: 500;
+}
+.leito-type strong { color: var(--brand); font-weight: 700; }
+
+.spec-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.spec-tag {
+  background: #fff; border: 1px solid var(--brand); color: var(--brand);
+  font-size: 11.5px; padding: 3px 9px; border-radius: 999px; font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .top3-hospital { grid-template-columns: 1fr; }
+  .top3-photo { height: 180px; }
+  .top3-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ---------- Test mode ---------- */
+.test-mode-banner {
+  background: #fff3cd;
+  border: 1px solid #e0b84f;
+  color: #5f4600;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Loader / Error ---------- */
+.loader {
+  position: fixed; inset: 0; background: rgba(11, 18, 32, 0.6); color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+}
+.spinner {
+  width: 46px; height: 46px; border: 4px solid rgba(255,255,255,0.2);
+  border-top-color: #fff; border-radius: 50%; animation: spin 0.9s linear infinite;
+  margin-bottom: 14px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error {
+  max-width: 720px; margin: 40px auto; padding: 16px 20px;
+  background: #fff4f2; border: 1px solid #ffd0c5; color: #b03a1e; border-radius: 10px;
+}
+
+.foot { text-align: center; color: var(--muted); font-size: 12px; padding: 8px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+  .profile { grid-template-columns: 1fr; }
+  .hospitals { grid-template-columns: 1fr; }
+  .topbar { flex-wrap: wrap; }
+}
 
 /* =========================================================
- * AJUSTE V53 — impressão executiva com fontes maiores
- * Aplicar no FINAL do style.css, depois do BLOCO FINAL LIMPO.
- * Mantém a visualização online inalterada.
+ * IQM 2025 — layout online estável
+ * ========================================================= */
+
+.iqm-card {
+  padding: 16px 18px 18px !important;
+  overflow: visible !important;
+}
+
+.iqm-card h3 {
+  margin: 0 0 12px 0 !important;
+  font-size: 15px !important;
+  line-height: 1.2 !important;
+  font-weight: 800 !important;
+}
+
+.iqm-wrap {
+  display: grid !important;
+  grid-template-columns: 220px minmax(0, 1fr) !important;
+  column-gap: 18px !important;
+  align-items: stretch !important;
+}
+
+.iqm-score {
+  width: 100% !important;
+  min-height: 140px !important;
+  padding: 16px 14px !important;
+  border-radius: 10px !important;
+  overflow: visible !important;
+}
+
+.iqm-val {
+  font-size: 56px !important;
+  line-height: 0.95 !important;
+  font-weight: 900 !important;
+}
+
+.iqm-scale {
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+.iqm-tier {
+  margin-top: 5px !important;
+  font-size: 11px !important;
+  padding: 4px 12px !important;
+}
+
+.iqm-refbox {
+  margin-top: 8px !important;
+  font-size: 11px !important;
+  line-height: 1.18 !important;
+}
+
+.iqm-bars {
+  min-height: 140px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 7px !important;
+  padding: 1px 0 !important;
+}
+
+.iqm-bar-row {
+  display: grid !important;
+  grid-template-columns: 170px minmax(120px, 1fr) 62px 105px !important;
+  column-gap: 8px !important;
+  align-items: center !important;
+  min-height: 18px !important;
+}
+
+.iqm-bar-row .label {
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+}
+
+.iqm-bar-row .track {
+  height: 8px !important;
+  border-radius: 999px !important;
+}
+
+.iqm-bar-row .val {
+  font-size: 11px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.iqm-bar-row .ref {
+  font-size: 9.2px !important;
+  line-height: 1.08 !important;
+  white-space: normal !important;
+}
+
+.iqm-footer-line {
+  display: grid !important;
+  grid-template-columns: 220px minmax(0, 1fr) !important;
+  column-gap: 18px !important;
+  align-items: stretch !important;
+  margin-top: 10px !important;
+}
+
+.iqm-2025-box {
+  width: 100% !important;
+  min-height: 44px !important;
+  padding: 8px 10px !important;
+  border-radius: 8px !important;
+  background: #f3f6fb !important;
+  color: #0b1220 !important;
+  border: 1px solid #cfd6e4 !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  grid-template-rows: auto auto !important;
+  column-gap: 8px !important;
+  row-gap: 2px !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.iqm-2025-label {
+  grid-column: 1 / 2 !important;
+  grid-row: 1 / 3 !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  line-height: 1.05 !important;
+  color: #1a3566 !important;
+  opacity: 1 !important;
+  text-transform: uppercase !important;
+}
+
+.iqm-2025-value {
+  grid-column: 2 / 3 !important;
+  grid-row: 1 / 2 !important;
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  color: #0b1220 !important;
+  text-align: right !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.iqm-2025-class {
+  grid-column: 2 / 3 !important;
+  grid-row: 2 / 3 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  color: #1a3566 !important;
+  text-align: right !important;
+}
+
+.iqm-composition-note {
+  margin: 0 !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  color: var(--muted) !important;
+  align-self: center !important;
+}
+
+.card:has(canvas#city-bubble) .chart-wrap {
+  height: 380px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.card:has(canvas#city-bubble) canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (max-width: 900px) {
+  .iqm-wrap,
+  .iqm-footer-line {
+    grid-template-columns: 1fr !important;
+  }
+
+  .iqm-bar-row {
+    grid-template-columns: 140px minmax(100px, 1fr) 55px 90px !important;
+  }
+}
+
+/* =========================================================
+ * Impressão / PDF — bloco consolidado e limpo
  * ========================================================= */
 
 @media print {
@@ -32,59 +637,358 @@ BLOCO CSS
     margin: 7mm;
   }
 
-  body.print-executive {
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
     font-size: 11.3pt !important;
     line-height: 1.30 !important;
   }
 
-  body.print-executive .hero {
-    padding: 5.2mm 5.8mm !important;
-    margin-bottom: 3.8mm !important;
+  .topbar,
+  .tabs,
+  .mini-search,
+  #loader,
+  .loader,
+  #error,
+  .error,
+  #suggestions,
+  #landing,
+  #print-btn,
+  #print-exec-btn,
+  #print-detail-btn,
+  .btn-ghost,
+  .card.pending,
+  .test-mode-banner {
+    display: none !important;
   }
 
-  body.print-executive #city-title {
+  #dashboard,
+  .dashboard {
+    display: block !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .hero,
+  .card,
+  .kpi {
+    box-shadow: none !important;
+    border: 0.9px solid #111827 !important;
+    border-radius: 6px !important;
+  }
+
+  .hero {
+    padding: 5.2mm 5.8mm !important;
+    margin: 0 0 3.8mm !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .eyebrow {
+    font-size: 8pt !important;
+    color: #1a3566 !important;
+  }
+
+  #city-title {
+    color: #000 !important;
     font-size: 18.2pt !important;
     line-height: 1.08 !important;
   }
 
-  body.print-executive #city-sub {
+  #city-sub,
+  .sub,
+  .muted,
+  .landing-note {
+    color: #111827 !important;
     font-size: 8.6pt !important;
     line-height: 1.18 !important;
   }
 
-  body.print-executive .tab-panel::before {
+  .tab-panel {
+    display: block !important;
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  .tab-panel[data-panel="micro"] {
+    break-before: auto !important;
+    page-break-before: auto !important;
+  }
+
+  .tab-panel::before {
+    display: block !important;
     font-size: 21pt !important;
+    font-weight: 950 !important;
     line-height: 1.08 !important;
+    color: #000 !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+    border-left: 9px solid #000 !important;
+    border-bottom: 2px solid #000 !important;
+    background: #e5e7eb !important;
     padding: 7px 10px 6px !important;
-    margin-bottom: 3.6mm !important;
+    margin: 0 0 3.6mm !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 
-  body.print-executive .card {
+  .tab-panel[data-panel="micro"]::before {
+    content: "MICRORREGIÃO";
+  }
+
+  .tab-panel[data-panel="cidade"]::before,
+  .tab-panel[data-panel="city"]::before {
+    content: "CIDADE";
+  }
+
+  .tab-panel[data-panel="infra"]::before {
+    content: "INFRAESTRUTURA";
+  }
+
+  .card {
     padding: 7px 9px !important;
-    margin-bottom: 3.8mm !important;
+    margin: 0 0 3.8mm !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
-  body.print-executive .card h3 {
+  .card h3 {
+    color: #000 !important;
     font-size: 11.5pt !important;
     line-height: 1.12 !important;
-    margin-bottom: 5px !important;
+    margin: 0 0 5px !important;
+    font-weight: 950 !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 
-  /* IQM — mantém margem interna, mas aumenta leitura */
+  .grid-2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 5mm !important;
+  }
+
+  .kpis {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 2mm !important;
+    margin-bottom: 2.5mm !important;
+  }
+
+  .kpis.kpis-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .kpis.kpis-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .kpis.kpis-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .kpi {
+    min-height: 38px !important;
+    padding: 5px 6px !important;
+    gap: 1px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .kpi.big {
+    background: #0b1220 !important;
+    border-color: #0b1220 !important;
+    color: #fff !important;
+  }
+
+  .kpi .k-label {
+    color: #111827 !important;
+    font-size: 7.5pt !important;
+    line-height: 1.08 !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.1px !important;
+  }
+
+  .kpi.big .k-label {
+    color: #fff !important;
+  }
+
+  .kpi .k-val {
+    color: #000 !important;
+    font-size: 13.6pt !important;
+    line-height: 1.02 !important;
+    font-weight: 950 !important;
+  }
+
+  .kpi.big .k-val {
+    color: #fff !important;
+    font-size: 15.3pt !important;
+  }
+
+  .kpi .k-compare {
+    color: #111827 !important;
+    font-size: 6.9pt !important;
+    line-height: 1.08 !important;
+    padding-top: 1px !important;
+    margin-top: 1px !important;
+    border-top: 0.6px solid #9ca3af !important;
+  }
+
+  .kpi .k-compare strong {
+    color: #000 !important;
+  }
+
+  .table-wrap {
+    overflow: visible !important;
+    max-height: none !important;
+    border: 1px solid #6b7280 !important;
+    width: 100% !important;
+  }
+
+  table.table,
+  .table {
+    width: 100% !important;
+    color: #000 !important;
+    border-collapse: collapse !important;
+    font-size: 8.8pt !important;
+    table-layout: auto !important;
+  }
+
+  .table th,
+  .table td {
+    padding: 4px 5px !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.18 !important;
+    vertical-align: top !important;
+    border-bottom: 1px solid #6b7280 !important;
+  }
+
+  .table th {
+    background: #d1d5db !important;
+    color: #000 !important;
+    font-size: 8.3pt !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.15px !important;
+  }
+
+  .table th.num,
+  .table td.num {
+    text-align: right !important;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .table tfoot td {
+    background: #0b1220 !important;
+    color: #fff !important;
+    font-weight: 950 !important;
+  }
+
+  .chart-wrap {
+    position: relative !important;
+    display: block !important;
+    height: 70mm !important;
+    max-width: 100% !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-snapshot {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    display: block !important;
+    background: #fff !important;
+    filter: contrast(1.12) saturate(0.95) !important;
+  }
+
+  canvas[data-print-replaced="1"] {
+    visibility: hidden !important;
+  }
+
+  .foot {
+    display: none !important;
+  }
+
+  /* Executivo: esconder material analítico/detalhado */
+  body.print-executive .tab-panel {
+    break-before: auto !important;
+    page-break-before: auto !important;
+  }
+
+  body.print-executive .tab-panel[data-panel="infra"] {
+    display: none !important;
+  }
+
+  body.print-executive .grid-2 {
+    display: block !important;
+  }
+
+  body.print-executive .card:has(canvas#micro-gender),
+  body.print-executive .card:has(canvas#micro-pyramid),
+  body.print-executive .card:has(canvas#micro-evolution),
+  body.print-executive .card:has(canvas#micro-ans-evol),
+  body.print-executive .card:has(canvas#city-gender),
+  body.print-executive .card:has(canvas#city-pyramid),
+  body.print-executive .card:has(canvas#city-evolution),
+  body.print-executive .card:has(canvas#city-ans-evol),
+  body.print-executive .card:has(canvas#city-renda),
+  body.print-executive .card:has(canvas#city-leitos-priv-evol),
+  body.print-executive .card:has(#micro-map),
+  body.print-executive .card:has(#infra-map),
+  body.print-executive .card:has(#city-profile),
+  body.print-executive .card:has(#top3-hospitals),
+  body.print-executive .card:has(#micro-leitos-table),
+  body.print-executive .card:has(#micro-pop-table),
+  body.print-executive .card:has(#city-ops-table),
+  body.print-executive .card:has(#city-med-density-table),
+  body.print-executive .card:has(#micro-types-table),
+  body.print-executive .card:has(#micro-services-table),
+  body.print-executive .card:has(#city-types-table),
+  body.print-executive .card:has(#city-services-table) {
+    display: none !important;
+  }
+
+  /* IQM executivo */
   body.print-executive .iqm-card {
     padding: 9px 11px 10px !important;
     margin-bottom: 4mm !important;
+    overflow: hidden !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   body.print-executive .iqm-card h3 {
     font-size: 13.4pt !important;
     line-height: 1.1 !important;
-    margin-bottom: 7px !important;
+    margin: 0 0 7px 0 !important;
+    font-weight: 950 !important;
   }
 
   body.print-executive .iqm-wrap {
+    display: grid !important;
     grid-template-columns: 165px minmax(0, 1fr) !important;
     column-gap: 20px !important;
+    align-items: stretch !important;
+    width: 100% !important;
   }
 
   body.print-executive .iqm-score {
@@ -94,49 +998,81 @@ BLOCO CSS
     height: 140px !important;
     min-height: 140px !important;
     padding: 13px 11px 13px !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: #0b1220 !important;
+    color: #fff !important;
+    overflow: hidden !important;
   }
 
   body.print-executive .iqm-val {
     font-size: 36pt !important;
     line-height: 0.88 !important;
-    margin-bottom: 4px !important;
+    margin: 0 0 4px 0 !important;
+    color: #fff !important;
   }
 
   body.print-executive .iqm-scale {
     font-size: 10pt !important;
+    line-height: 1 !important;
     margin: 1px 0 5px 0 !important;
+    color: rgba(255,255,255,0.9) !important;
   }
 
   body.print-executive .iqm-tier {
     font-size: 9.2pt !important;
+    line-height: 1 !important;
     padding: 3px 9px !important;
     margin: 2px 0 8px 0 !important;
+    color: #fff !important;
   }
 
   body.print-executive .iqm-refbox {
     font-size: 8.1pt !important;
     line-height: 1.18 !important;
+    margin-top: 4px !important;
     padding: 0 8px 2px !important;
+    text-align: center !important;
+    color: #fff !important;
   }
 
   body.print-executive .iqm-bars {
+    min-width: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    gap: 0 !important;
     min-height: 140px !important;
   }
 
   body.print-executive .iqm-bar-row {
+    display: grid !important;
     grid-template-columns: 162px minmax(0, 1fr) 62px 122px !important;
     column-gap: 9px !important;
+    align-items: center !important;
     min-height: 21px !important;
     font-size: 9.1pt !important;
+    line-height: 1.1 !important;
   }
 
   body.print-executive .iqm-bar-row .label {
     font-size: 9.1pt !important;
+    font-weight: 850 !important;
     line-height: 1.08 !important;
+    color: #000 !important;
   }
 
   body.print-executive .iqm-bar-row .track {
     height: 11px !important;
+    border-radius: 999px !important;
+    border: 1px solid #111827 !important;
+    background: #eef1f5 !important;
+    overflow: hidden !important;
+    min-width: 0 !important;
   }
 
   body.print-executive .iqm-bar-row .fill {
@@ -145,17 +1081,26 @@ BLOCO CSS
 
   body.print-executive .iqm-bar-row .val {
     font-size: 9.2pt !important;
+    font-weight: 950 !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+    color: #000 !important;
   }
 
   body.print-executive .iqm-bar-row .ref {
     font-size: 7.7pt !important;
     line-height: 1.08 !important;
+    text-align: right !important;
+    color: #000 !important;
   }
 
   body.print-executive .iqm-footer-line {
+    display: grid !important;
     grid-template-columns: 165px minmax(0, 1fr) !important;
     column-gap: 20px !important;
+    align-items: center !important;
     margin-top: 7px !important;
+    width: 100% !important;
   }
 
   body.print-executive .iqm-2025-box {
@@ -163,90 +1108,171 @@ BLOCO CSS
     min-width: 165px !important;
     max-width: 165px !important;
     min-height: 36px !important;
+    box-sizing: border-box !important;
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-areas:
+      "label value"
+      "class value" !important;
+    align-items: center !important;
+    column-gap: 6px !important;
+    row-gap: 0 !important;
     padding: 5px 7px !important;
+    border-radius: 6px !important;
+    background: #0b1220 !important;
+    color: #fff !important;
+    overflow: hidden !important;
   }
 
   body.print-executive .iqm-2025-label {
+    grid-area: label !important;
     font-size: 7.8pt !important;
+    line-height: 1 !important;
+    font-weight: 850 !important;
+    color: #fff !important;
+    white-space: nowrap !important;
   }
 
   body.print-executive .iqm-2025-value {
+    grid-area: value !important;
     font-size: 15.8pt !important;
+    line-height: 1 !important;
+    font-weight: 950 !important;
+    color: #fff !important;
+    text-align: right !important;
+    white-space: nowrap !important;
   }
 
   body.print-executive .iqm-2025-class {
+    grid-area: class !important;
     font-size: 7.6pt !important;
+    line-height: 1 !important;
+    font-weight: 750 !important;
+    color: #fff !important;
+    text-align: left !important;
+    white-space: nowrap !important;
   }
 
   body.print-executive .iqm-composition-note,
   body.print-executive .iqm-card .muted {
-    font-size: 8.0pt !important;
-    line-height: 1.20 !important;
+    font-size: 8pt !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    color: #111827 !important;
   }
 
-  /* Benchmark: mantém destaque, mas compensa o aumento geral das fontes */
+  /* Benchmark regional */
+  body.print-executive .card:has(canvas#city-bubble) {
+    display: block !important;
+    margin-bottom: 4mm !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
   body.print-executive .card:has(canvas#city-bubble) .chart-wrap {
     height: 73mm !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  body.print-executive .card:has(canvas#city-bubble) canvas,
+  body.print-executive .card:has(canvas#city-bubble) img.print-snapshot {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    object-fit: contain !important;
   }
 
   body.print-executive .card:has(canvas#city-bubble) .muted {
     font-size: 7.2pt !important;
     line-height: 1.12 !important;
+    margin-top: 2px !important;
   }
 
-  /* KPIs: aumenta fonte sem estourar a grade */
-  body.print-executive .kpi {
-    min-height: 38px !important;
-    padding: 5px 6px !important;
+  /* Operadoras da microrregião no executivo */
+  body.print-executive .card:has(#micro-ops-table) {
+    display: block !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 3.8mm !important;
   }
 
-  body.print-executive .kpi .k-label {
-    font-size: 7.5pt !important;
-    line-height: 1.08 !important;
-  }
-
-  body.print-executive .kpi .k-val {
-    font-size: 13.6pt !important;
-    line-height: 1.02 !important;
-  }
-
-  body.print-executive .kpi.big .k-val {
-    font-size: 15.3pt !important;
-  }
-
-  body.print-executive .kpi .k-compare {
-    font-size: 6.9pt !important;
-    line-height: 1.08 !important;
-  }
-
-  /* Tabelas do executivo */
   body.print-executive #micro-ops-table {
     font-size: 8.2pt !important;
   }
 
-  body.print-executive #micro-ops-table th,
-  body.print-executive #micro-ops-table td {
-    padding: 4px 5px !important;
-    line-height: 1.16 !important;
+  /* Evolução dos leitos privados na base da página 1 */
+  body.print-executive .card:has(canvas#micro-leitos-priv-evol) {
+    display: block !important;
+    margin-bottom: 0 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.print-executive .card:has(canvas#micro-leitos-priv-evol) .chart-wrap {
+    height: 50mm !important;
+  }
+
+  body.print-executive .card.empty-history {
+    display: none !important;
+  }
+
+  /* CIDADE em página própria; perfil fora; leitos por hospital dentro */
+  body.print-executive .tab-panel[data-panel="cidade"],
+  body.print-executive .tab-panel[data-panel="city"] {
+    display: flex !important;
+    flex-direction: column !important;
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  body.print-executive .tab-panel[data-panel="cidade"]::before,
+  body.print-executive .tab-panel[data-panel="city"]::before {
+    order: 0 !important;
+    margin-bottom: 3mm !important;
+  }
+
+  body.print-executive .tab-panel[data-panel="cidade"] > *,
+  body.print-executive .tab-panel[data-panel="city"] > * {
+    order: 20 !important;
+  }
+
+  body.print-executive .tab-panel[data-panel="cidade"] .kpis,
+  body.print-executive .tab-panel[data-panel="city"] .kpis {
+    order: 2 !important;
+  }
+
+  body.print-executive .tab-panel[data-panel="cidade"] .card:has(#city-leitos-table),
+  body.print-executive .tab-panel[data-panel="city"] .card:has(#city-leitos-table) {
+    display: block !important;
+    order: 3 !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    margin-bottom: 4mm !important;
   }
 
   body.print-executive #city-leitos-table {
     font-size: 8.1pt !important;
+    table-layout: fixed !important;
+    width: 100% !important;
   }
 
   body.print-executive #city-leitos-table th,
   body.print-executive #city-leitos-table td {
     padding: 4px 5px !important;
     line-height: 1.16 !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
   }
 
-  /* Gráfico final da página 1 */
-  body.print-executive .card:has(canvas#micro-leitos-priv-evol) .chart-wrap {
-    height: 50mm !important;
+  body.print-executive #city-leitos-table th:first-child,
+  body.print-executive #city-leitos-table td:first-child {
+    width: 32% !important;
   }
 
-  body.print-executive .card:has(canvas#micro-leitos-priv-evol) .muted {
-    font-size: 6.9pt !important;
-    line-height: 1.08 !important;
+  body.print-executive #city-leitos-table th:nth-child(2),
+  body.print-executive #city-leitos-table td:nth-child(2) {
+    width: 18% !important;
   }
 }
