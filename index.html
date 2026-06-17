@@ -107,7 +107,7 @@
       <div class="card">
         <h3>Benchmark regional — cobertura, pressão assistencial e PIB</h3>
         <div class="chart-wrap"><canvas id="city-bubble"></canvas></div>
-        <p class="muted">Bolha azul = cidade pesquisada · Bolha vermelha = Porto Alegre (referência). Eixo X: beneficiários médico-hospitalares por leito privado (menor = mais leitos disponíveis). Eixo Y: CAGR (% a.a.) de beneficiários. Tamanho da bolha: % de pessoas ocupadas com rendimento ≥ 10 salários mínimos (proxy para classe A+B).</p>
+        <p class="muted">Bolha azul = cidade pesquisada · Bolha vermelha = Porto Alegre (referência). Eixo X: beneficiários médico-hospitalares por leito privado (maior = maior pressão assistencial). Eixo Y: taxa de cobertura de planos de saúde (% da população). Tamanho da bolha: PIB municipal, em escala logarítmica.</p>
       </div>
 
     <nav class="tabs" role="tablist">
@@ -172,9 +172,11 @@
         <div class="kpi"><span class="k-label">Beneficiários médico-hospitalar</span><span id="micro-ans-total" class="k-val">—</span></div>
         <div class="kpi"><span class="k-label">Cobertura sobre população</span><span id="micro-ans-pct" class="k-val">—</span></div>
         <div class="kpi"><span class="k-label">Operadoras ativas</span><span id="micro-ops-count" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">CAGR de beneficiários</span><span id="micro-ans-cagr" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Crescimento vs. ano anterior</span><span id="micro-ans-yoy" class="k-val">—</span></div>
       </div>
 
-      <div class="card">
+      <div class="card exec-hide">
         <h3>Evolução dos beneficiários — microrregião</h3>
         <div class="chart-wrap"><canvas id="micro-ans-evol"></canvas></div>
         <p class="muted">Fonte: ANS · Informações consolidadas de beneficiários (PDA 024).</p>
@@ -317,9 +319,11 @@
         <div class="kpi"><span class="k-label">Beneficiários médico-hospitalar</span><span id="city-ans-total" class="k-val">—</span></div>
         <div class="kpi"><span class="k-label">Cobertura sobre população</span><span id="city-ans-pct" class="k-val">—</span></div>
         <div class="kpi"><span class="k-label">Operadoras ativas</span><span id="city-ops-count" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">CAGR de beneficiários</span><span id="city-ans-cagr" class="k-val">—</span></div>
+        <div class="kpi"><span class="k-label">Crescimento vs. ano anterior</span><span id="city-ans-yoy" class="k-val">—</span></div>
       </div>
 
-      <div class="card">
+      <div class="card exec-hide">
         <h3>Evolução dos beneficiários</h3>
         <div class="chart-wrap"><canvas id="city-ans-evol"></canvas></div>
       </div>
