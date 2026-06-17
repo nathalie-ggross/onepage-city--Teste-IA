@@ -1614,8 +1614,8 @@ function growthPrevYearFromLeitosPrivSeries(series) {
 
 function renderLeitosPrivTrendKPIs(scope, series) {
   const prefix = scope === "city" ? "city" : "micro";
-  const cagrNode = document.getElementById(`${prefix}-ans-cagr`);
-  const yoyNode = document.getElementById(`${prefix}-ans-yoy`);
+  const cagrNode = document.getElementById(`${prefix}-leitos-cagr`) || document.getElementById(`${prefix}-ans-cagr`);
+  const yoyNode = document.getElementById(`${prefix}-leitos-yoy`) || document.getElementById(`${prefix}-ans-yoy`);
 
   if (cagrNode) cagrNode.textContent = fmtSignedPct(cagrFromLeitosPrivSeries(series), "% a.a.");
   if (yoyNode) yoyNode.textContent = fmtSignedPct(growthPrevYearFromLeitosPrivSeries(series), "%");
