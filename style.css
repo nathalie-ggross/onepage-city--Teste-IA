@@ -1555,3 +1555,30 @@ body.print-executive img.print-snapshot {
     margin-top: 1.2mm !important;
   }
 }
+
+
+/* ===== HOTFIX v63: esconder gráficos executivos por JS e CSS ===== */
+@media print {
+  body.print-executive .exec-hide,
+  body.print-executive [data-exec-force-hidden="1"],
+  body.print-executive .card:has(#micro-leitos-priv-evol),
+  body.print-executive .card:has(#city-leitos-priv-evol),
+  body.print-executive .card:has(#micro-ans-evol),
+  body.print-executive .card:has(#city-ans-evol),
+  body.print-executive .card:has(img.print-snapshot + canvas#micro-leitos-priv-evol),
+  body.print-executive .card:has(img.print-snapshot + canvas#city-leitos-priv-evol) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: hidden !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    break-before: avoid !important;
+    break-after: avoid !important;
+  }
+}
