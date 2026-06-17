@@ -1050,8 +1050,8 @@ renderGenderPie("city", pyramidCity);
 renderPyramid("city", pyramidCity);
 renderEvolution("city", evolutionCity, pyramidCity);
 renderAnsEvolution("city", ansHistCity?.series || []);
-renderAnsKPIs("city", ansCity, cityPop, ansHistCity?.series || []);
-renderAnsKPIs("micro", ansMicro, Object.values(popByCity).reduce((a,b) => a + (b||0), 0), ansHistMicro?.series || []);
+renderAnsKPIs("city", ansCity, cityPop);
+renderAnsKPIs("micro", ansMicro, Object.values(popByCity).reduce((a,b) => a + (b||0), 0));
 renderOpsTable("city", ansCity);
 
 renderMedicalDensityTable({
@@ -1094,6 +1094,8 @@ renderLeitosCity(leitosCity, cityPop, ansCity?.total || 0);
 renderLeitosMicro(leitosMicro, Object.values(popByCity).reduce((a,b)=>a+b,0), ansMicro?.total || 0);
 renderLeitosPrivEvolution("city", leitosHistCity?.series || []);
 renderLeitosPrivEvolution("micro", leitosHistMicro?.series || []);
+renderLeitosPrivTrendKPIs("city", leitosHistCity?.series || []);
+renderLeitosPrivTrendKPIs("micro", leitosHistMicro?.series || []);
 renderPOAReferences(poaRef, {
   pop: popCaxiasRef,
   ansTotal: ansCaxiasRef?.total || 0,
@@ -1559,21 +1561,13 @@ function renderMicroKPIs(popByCity, pyramidMicro, ansMicro) {
   $("#micro-60").textContent = `${fmt(pop60)} (${pct(pop60, total)})`;
 }
 
-function yoyFromAnsSeries(series) {
-  if (!series || series.length < 2) return null;
-
-  const valid = series.filter(s => s && s.month && Number(s.total) > 0);
-  if (valid.length < 2) return null;
-
-  const last = valid[valid.length - 1];
-  const y = Number(String(last.month).slice(0, 4));
-  const m = String(last.month).slice(4, 6);
-  const prevYm = `${y - 1}${m}`;
-  const prev = valid.find(s => String(s.month) === prevYm);
-
-  if (!prev || !prev.total) return null;
-
-  return ((last.total / prev.total) - 1) * 100;
+function renderAnsKPIs(scope, ansData, totalPop) {
+  const prefix = scope === "city" ? "city" : "micro";
+  const total = ansData?.total ?? 0;
+  $(`#${prefix}-ans-total`).textContent = fmt(total);
+  $(`#${prefix}-ans-pct`).textContent = totalPop ? ((total / totalPop) * 100).toFixed(1) + "%" : "—";
+  $(`#${prefix}-ops-count`).textContent = fmt((ansData?.operadoras ?? []).length);
+  $(`#${prefix}-ans-month`).textContent = monthLabel(ansData?.month);
 }
 
 function fmtSignedPct(v, suffix = "%") {
@@ -1582,20 +1576,49 @@ function fmtSignedPct(v, suffix = "%") {
   return `${sign}${fmt1(v)}${suffix}`;
 }
 
-function renderAnsKPIs(scope, ansData, totalPop, ansSeries = []) {
-  const prefix = scope === "city" ? "city" : "micro";
-  const total = ansData?.total ?? 0;
-  const cagr = cagrFromAnsSeries(ansSeries);
-  const yoy = yoyFromAnsSeries(ansSeries);
+function validLeitosPrivSeries(series) {
+  return (series || [])
+    .filter(s => Number.isFinite(Number(s?.year)) && Number.isFinite(Number(s?.privados)) && Number(s.privados) > 0)
+    .map(s => ({
+      year: Number(s.year),
+      privados: Number(s.privados),
+    }))
+    .sort((a, b) => a.year - b.year);
+}
 
-  $(`#${prefix}-ans-total`).textContent = fmt(total);
-  $(`#${prefix}-ans-pct`).textContent = totalPop
-    ? ((total / totalPop) * 100).toFixed(1) + "%"
-    : "—";
-  $(`#${prefix}-ops-count`).textContent = fmt((ansData?.operadoras ?? []).length);
-  $(`#${prefix}-ans-cagr`).textContent = fmtSignedPct(cagr, "% a.a.");
-  $(`#${prefix}-ans-yoy`).textContent = fmtSignedPct(yoy, "%");
-  $(`#${prefix}-ans-month`).textContent = monthLabel(ansData?.month);
+function cagrFromLeitosPrivSeries(series) {
+  const valid = validLeitosPrivSeries(series);
+  if (valid.length < 2) return null;
+
+  const first = valid[0];
+  const last = valid[valid.length - 1];
+  const years = last.year - first.year;
+
+  if (years <= 0 || first.privados <= 0 || last.privados <= 0) return null;
+
+  return (Math.pow(last.privados / first.privados, 1 / years) - 1) * 100;
+}
+
+function growthPrevYearFromLeitosPrivSeries(series) {
+  const valid = validLeitosPrivSeries(series);
+  if (valid.length < 2) return null;
+
+  const last = valid[valid.length - 1];
+  const previousYear = valid.find(s => s.year === last.year - 1);
+  const previous = previousYear || valid[valid.length - 2];
+
+  if (!previous || previous.privados <= 0) return null;
+
+  return ((last.privados / previous.privados) - 1) * 100;
+}
+
+function renderLeitosPrivTrendKPIs(scope, series) {
+  const prefix = scope === "city" ? "city" : "micro";
+  const cagrNode = document.getElementById(`${prefix}-ans-cagr`);
+  const yoyNode = document.getElementById(`${prefix}-ans-yoy`);
+
+  if (cagrNode) cagrNode.textContent = fmtSignedPct(cagrFromLeitosPrivSeries(series), "% a.a.");
+  if (yoyNode) yoyNode.textContent = fmtSignedPct(growthPrevYearFromLeitosPrivSeries(series), "%");
 }
 
 function renderGenderPie(scope, pyramid) {
@@ -2427,6 +2450,7 @@ function renderLeitosPrivEvolution(scope, series) {
 
   const wrap = canvas.parentElement;
   const card = canvas.closest(".card");
+  if (card) card.classList.add("exec-hide");
 
   // Restaura o card antes de avaliar a nova cidade.
   // Isso evita que uma cidade sem histórico deixe o card preso/escondido
