@@ -5,9 +5,9 @@
   "type": "module",
   "engines": {
     "node": ">=18"
-  }
-}
-
-"scripts": {
-  "gerar:iqm-rs": "node scripts/gerar_iqm_rs.js"
+  },
+  "scripts": {
+    "gerar:iqm-rs": "node scripts/gerar_iqm_rs.js"
+  },
+  "dependencies": {}
 }
