@@ -3513,32 +3513,35 @@ function renderBubbleChart(points) {
         },
         y: {
           ...yScale,
-          title: {
-            display: true,
-            text: "Taxa de cobertura de planos de saúde (% da população)",
-            color: "#000000",
-            font: {
-              size: 13,
-              weight: "900"
-            }
-          },
-          ticks: {
-            color: "#000000",
-            font: {
-              size: 12,
-              weight: "800"
-            },
-            callback: v => `${fmt1(v)}%`
-          },
-          grid: {
-            color: "#6b7280",
-            lineWidth: 0.8
-          },
-          border: {
-            color: "#000000",
-            width: 1.4
-          }
-        }
+           title: {
+    display: true,
+    text: [
+      "Taxa de cobertura de planos de saúde",
+      "(% da população)"
+    ],
+    color: "#000000",
+    font: {
+      size: 13,
+      weight: "900"
+    }
+  },
+  ticks: {
+    color: "#000000",
+    font: {
+      size: 12,
+      weight: "800"
+    },
+    callback: v => `${fmt1(v)}%`
+  },
+  grid: {
+    color: "#6b7280",
+    lineWidth: 0.8
+  },
+  border: {
+    color: "#000000",
+    width: 1.4
+  }
+}
       },
     },
     plugins: [{
