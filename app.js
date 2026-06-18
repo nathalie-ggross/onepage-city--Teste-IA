@@ -3458,8 +3458,16 @@ function renderBubbleChart(points) {
       datasets: [ds],
     },
     options: {
-      maintainAspectRatio: false,
-      plugins: {
+  maintainAspectRatio: false,
+  layout: {
+    padding: {
+      left: 24,
+      right: 8,
+      top: 4,
+      bottom: 4,
+    },
+  },
+  plugins: {
         legend: {
           display: false,
         },
