@@ -7,3 +7,7 @@
     "node": ">=18"
   }
 }
+
+"scripts": {
+  "gerar:iqm-rs": "node scripts/gerar_iqm_rs.js"
+}
