@@ -2964,15 +2964,20 @@ async function buildRegionalBubblePoints({
   const microIds = state.micro.municipios.map(m => String(m.id));
   const cityCod6 = String(cityIbge).slice(0, 6);
 
-  const [ansByCity, pibByCity, refPopByCity, ansCaxiasRaw, leitosCaxias, pibCaxias, pibPOA] = await Promise.all([
-    fetchAnsMHByMunicipios(cityUF, microIds).catch(() => ({})),
-    fetchPIBByMunicipios(microIds).catch(() => ({})),
-    fetchPopByMunicipios([CAXIAS_IBGE, POA_IBGE]).catch(() => ({})),
-    getJSON(`${ANS}?uf=RS&cod=${String(CAXIAS_IBGE).slice(0, 6)}`).catch(() => null),
-    getJSON(`${LEITOS}?cod=${String(CAXIAS_IBGE).slice(0, 6)}`).catch(() => null),
-    fetchPIB(CAXIAS_IBGE).catch(() => null),
-    fetchPIB(POA_IBGE).catch(() => null),
-  ]);
+  const [ansByCity, pibByCityRaw, refPopByCity, ansCaxiasRaw, leitosCaxias] = await Promise.all([
+  fetchAnsMHByMunicipios(cityUF, microIds).catch(() => ({})),
+
+  // Inclui também POA e Caxias na busca em lote do PIB.
+  fetchPIBByMunicipios([...microIds, CAXIAS_IBGE, POA_IBGE]).catch(() => ({})),
+
+  fetchPopByMunicipios([CAXIAS_IBGE, POA_IBGE]).catch(() => ({})),
+  getJSON(`${ANS}?uf=RS&cod=${String(CAXIAS_IBGE).slice(0, 6)}`).catch(() => null),
+  getJSON(`${LEITOS}?cod=${String(CAXIAS_IBGE).slice(0, 6)}`).catch(() => null),
+]);
+
+const pibByCity = pibByCityRaw || {};
+const pibCaxias = pibByCity[CAXIAS_IBGE] || null;
+const pibPOA = pibByCity[POA_IBGE] || null;
 
   const privadosByCod6 = privateBedsByCityFromLeitosMicro(leitosMicro);
 
@@ -3106,16 +3111,17 @@ const pibValues = points
   .map(p => Number(p.pib || 0))
   .filter(v => v > 0);
 
-const MIN_BUBBLE_R = 5.5;
-const MAX_BUBBLE_R = 30;
-const MISSING_PIB_R = 4.5;
+const MIN_BUBBLE_R = 4.5;
+const MAX_BUBBLE_R = 18;
+const MISSING_PIB_R = 3.2;
 
 if (!pibValues.length) {
   for (const p of points) {
-    p.r = 8;
+    p.r = 5;
     p.pibMissing = true;
   }
-} else {
+} 
+else {
   const logs = pibValues.map(v => Math.log10(v));
   const minLogPib = Math.min(...logs);
   const maxLogPib = Math.max(...logs);
