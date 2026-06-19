@@ -109,17 +109,324 @@ const pct = (v, total) => total ? ((v / total) * 100).toFixed(1) + "%" : "—";
 // Defesa em profundidade: rejeita explicitamente modalidades odonto mesmo que mh > 0
 // (impossível em teoria, mas blinda contra dados sujos do backend).
 const ODONTO_RX = /ODONTO|DENTAL|DENT[ÁA]RIO/i;
-function ansMHOnly(raw) {
+
+function parseNum(value) {
+  if (value == null || value === "") return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+
+  const txt = String(value).trim();
+  if (!txt) return null;
+
+  // Aceita número no padrão brasileiro ou americano.
+  const normalized = txt
+    .replace(/\s/g, "")
+    .replace(/\.(?=\d{3}(\D|$))/g, "")
+    .replace(",", ".");
+
+  const n = Number(normalized);
+  return Number.isFinite(n) ? n : null;
+}
+
+function pickNum(obj, keys) {
+  if (!obj) return null;
+
+  for (const key of keys) {
+    if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
+    const n = parseNum(obj[key]);
+    if (n != null) return n;
+  }
+
+  return null;
+}
+
+function unwrapAnsPayload(raw) {
   if (!raw) return null;
-  const ops = (raw.operadoras || [])
-    .filter(o => (o.mh || 0) > 0 && !ODONTO_RX.test(o.modalidade || ""))
-    .map(o => ({ ...o, beneficiarios: o.mh }))
+  if (raw.data && typeof raw.data === "object") return raw.data;
+  if (raw.result && typeof raw.result === "object") return raw.result;
+  if (raw.payload && typeof raw.payload === "object") return raw.payload;
+  if (raw.ans && typeof raw.ans === "object") return raw.ans;
+  return raw;
+}
+
+const ANS_TOTAL_KEYS_EXPLICIT_MH = [
+  "mh",
+  "total_mh",
+  "beneficiarios_mh",
+  "beneficiariosMH",
+  "medicoHospitalar",
+  "medico_hospitalar",
+  "assistencia_medica",
+  "assistenciaMedica",
+  "assistencia_medico_hospitalar",
+  "cobertura_medico_hospitalar",
+  "qtd_mh",
+];
+
+const ANS_TOTAL_KEYS_FALLBACK = [
+  "total",
+  "beneficiarios",
+  "vidas",
+  "quantidade",
+  "qtd",
+  "count",
+];
+
+function ansOperatorValue(o) {
+  const explicit = pickNum(o, ANS_TOTAL_KEYS_EXPLICIT_MH);
+  if (explicit != null) return explicit;
+  return pickNum(o, ANS_TOTAL_KEYS_FALLBACK) || 0;
+}
+
+function ansOperatorLabel(o) {
+  return String(
+    o?.razao ||
+    o?.razao_social ||
+    o?.nome ||
+    o?.operadora ||
+    o?.nome_operadora ||
+    o?.registro_ans ||
+    "Operadora"
+  );
+}
+
+function ansOperatorModality(o) {
+  return String(
+    o?.modalidade ||
+    o?.segmentacao ||
+    o?.segmento ||
+    o?.cobertura ||
+    o?.tipo ||
+    "—"
+  );
+}
+
+function ansRawOperators(raw) {
+  const r = unwrapAnsPayload(raw);
+  if (!r) return [];
+
+  return Array.isArray(r.operadoras) ? r.operadoras
+    : Array.isArray(r.operators) ? r.operators
+    : Array.isArray(r.rows) ? r.rows
+    : Array.isArray(r.data) ? r.data
+    : Array.isArray(r.items) ? r.items
+    : [];
+}
+
+// Filtra ANS para MÉDICO-HOSPITALAR somente (exclui odontológicos).
+// Aceita payloads antigos e novos do proxy: `mh`, `beneficiarios_mh`,
+// `medico_hospitalar` ou, como fallback, `total/beneficiarios`.
+function ansMHOnly(raw) {
+  const r = unwrapAnsPayload(raw);
+  if (!r) return null;
+
+  const rawMonth = r.month || r.competencia || r.mes || r.periodo || r.ano_mes || null;
+
+  const ops = ansRawOperators(r)
+    .map(o => {
+      const modalidade = ansOperatorModality(o);
+      const razao = ansOperatorLabel(o);
+      const hay = `${modalidade} ${o?.cobertura || ""} ${o?.segmentacao || ""} ${razao}`;
+      const beneficiarios = ansOperatorValue(o);
+
+      return {
+        ...o,
+        razao,
+        modalidade,
+        beneficiarios,
+        mh: beneficiarios,
+        _isOdonto: ODONTO_RX.test(hay),
+      };
+    })
+    .filter(o => (o.beneficiarios || 0) > 0 && !o._isOdonto)
     .sort((a, b) => b.beneficiarios - a.beneficiarios);
+
+  const explicitTotal = pickNum(r, ANS_TOTAL_KEYS_EXPLICIT_MH);
+  const sumOps = ops.reduce((sum, o) => sum + Number(o.beneficiarios || 0), 0);
+  const fallbackTotal = pickNum(r, ANS_TOTAL_KEYS_FALLBACK);
+
+  const total = explicitTotal != null && explicitTotal > 0
+    ? explicitTotal
+    : sumOps > 0
+      ? sumOps
+      : fallbackTotal || 0;
+
   return {
-    month: raw.month,
-    total: raw.mh || 0,
+    month: rawMonth,
+    total,
+    mh: total,
     operadoras: ops,
   };
+}
+
+function mergeAnsPayloads(payloads) {
+  const normalized = (payloads || [])
+    .map(ansMHOnly)
+    .filter(Boolean);
+
+  const byOperator = new Map();
+  let total = 0;
+  let month = null;
+
+  for (const item of normalized) {
+    total += Number(item.total || 0);
+    if (item.month && (!month || String(item.month) > String(month))) month = item.month;
+
+    for (const op of item.operadoras || []) {
+      const key = `${op.razao || ""}||${op.modalidade || ""}`;
+      const current = byOperator.get(key) || {
+        razao: op.razao,
+        modalidade: op.modalidade,
+        beneficiarios: 0,
+        mh: 0,
+      };
+
+      current.beneficiarios += Number(op.beneficiarios || 0);
+      current.mh = current.beneficiarios;
+      byOperator.set(key, current);
+    }
+  }
+
+  return {
+    month,
+    total,
+    mh: total,
+    operadoras: Array.from(byOperator.values())
+      .sort((a, b) => b.beneficiarios - a.beneficiarios),
+  };
+}
+
+function ansSeriesTotalValue(s) {
+  if (!s) return 0;
+
+  const explicit = pickNum(s, ANS_TOTAL_KEYS_EXPLICIT_MH);
+  if (explicit != null) return explicit;
+
+  return pickNum(s, ANS_TOTAL_KEYS_FALLBACK) || 0;
+}
+
+function normalizeAnsHistory(raw) {
+  const r = unwrapAnsPayload(raw) || {};
+  const series = Array.isArray(r.series) ? r.series
+    : Array.isArray(r.historico) ? r.historico
+    : Array.isArray(r.history) ? r.history
+    : [];
+
+  return {
+    series: series
+      .map(s => ({
+        month: s.month || s.competencia || s.mes || s.periodo || s.ano_mes,
+        total: ansSeriesTotalValue(s),
+      }))
+      .filter(s => s.month && Number.isFinite(Number(s.total)))
+      .sort((a, b) => String(a.month).localeCompare(String(b.month))),
+  };
+}
+
+function ansPayloadHasValue(raw) {
+  const normalized = ansMHOnly(raw);
+  return !!(normalized && (normalized.total > 0 || (normalized.operadoras || []).length > 0));
+}
+
+async function fetchAnsSingle(uf, cod6) {
+  const ufClean = String(uf || "").trim().toUpperCase();
+  const cod = String(cod6 || "").slice(0, 6);
+  if (!cod) return null;
+
+  const urls = [
+    `${ANS}?uf=${encodeURIComponent(ufClean)}&cod=${encodeURIComponent(cod)}`,
+    `${ANS}?cod=${encodeURIComponent(cod)}&uf=${encodeURIComponent(ufClean)}`,
+    `${ANS}?uf=${encodeURIComponent(ufClean)}&cods=${encodeURIComponent(cod)}`,
+    `${ANS}/multi?uf=${encodeURIComponent(ufClean)}&cods=${encodeURIComponent(cod)}`,
+  ];
+
+  let best = null;
+
+  for (const url of urls) {
+    const raw = await getJSON(url).catch(() => null);
+    if (!raw) continue;
+    if (!best) best = raw;
+    if (ansPayloadHasValue(raw)) return raw;
+  }
+
+  return best;
+}
+
+async function fetchAnsMulti(uf, cods6) {
+  const ufClean = String(uf || "").trim().toUpperCase();
+  const cods = String(cods6 || "")
+    .split(",")
+    .map(c => String(c).trim().slice(0, 6))
+    .filter(Boolean);
+
+  if (!cods.length) return null;
+
+  const codsParam = cods.join(",");
+  const urls = [
+    `${ANS}/multi?uf=${encodeURIComponent(ufClean)}&cods=${encodeURIComponent(codsParam)}`,
+    `${ANS}/multi?cods=${encodeURIComponent(codsParam)}&uf=${encodeURIComponent(ufClean)}`,
+  ];
+
+  let best = null;
+
+  for (const url of urls) {
+    const raw = await getJSON(url).catch(() => null);
+    if (!raw) continue;
+    if (!best) best = raw;
+    if (ansPayloadHasValue(raw)) return raw;
+  }
+
+  // Fallback: se o endpoint multi estiver restrito ao RS ou vier vazio,
+  // soma município a município usando a UF real da cidade pesquisada.
+  const singles = await mapInChunks(cods, 5, async cod => {
+    return fetchAnsSingle(ufClean, cod).catch(() => null);
+  });
+
+  const merged = mergeAnsPayloads(singles);
+  if (merged.total > 0 || merged.operadoras.length > 0) return merged;
+
+  return best || merged;
+}
+
+async function fetchAnsHistory(uf, cods6) {
+  const ufClean = String(uf || "").trim().toUpperCase();
+  const cods = String(cods6 || "")
+    .split(",")
+    .map(c => String(c).trim().slice(0, 6))
+    .filter(Boolean);
+
+  if (!cods.length) return { series: [] };
+
+  const codsParam = cods.join(",");
+  const urls = [
+    `${ANS}/history?uf=${encodeURIComponent(ufClean)}&cods=${encodeURIComponent(codsParam)}`,
+    `${ANS}/history?cods=${encodeURIComponent(codsParam)}&uf=${encodeURIComponent(ufClean)}`,
+  ];
+
+  let best = null;
+
+  for (const url of urls) {
+    const raw = await getJSON(url).catch(() => null);
+    if (!raw) continue;
+
+    const normalized = normalizeAnsHistory(raw);
+    if (!best) best = normalized;
+
+    if (normalized.series.some(s => Number(s.total) > 0)) {
+      return normalized;
+    }
+  }
+
+  // Fallback mínimo: usa o snapshot atual como uma série de 1 ponto.
+  // O gráfico histórico pode continuar oculto por insuficiência de pontos,
+  // mas os KPIs e o IQM deixam de zerar quando a UF não é RS.
+  const current = await fetchAnsMulti(ufClean, codsParam).catch(() => null);
+  const snap = ansMHOnly(current);
+
+  if (snap?.total > 0) {
+    return { series: [{ month: snap.month || "Atual", total: snap.total }] };
+  }
+
+  return best || { series: [] };
 }
 
 function renderTestModeBanner() {
@@ -685,8 +992,8 @@ async function loadPOAReference() {
     ] = await Promise.all([
       fetchPopByMunicipios([POA_IBGE]).catch(() => ({})),
       fetchPopByMunicipios(microIds).catch(() => ({})),
-      getJSON(`${ANS}?uf=${ufSigla}&cod=${POA_CNES}`).catch(() => null),
-      getJSON(`${ANS}/multi?uf=${ufSigla}&cods=${microCods6}`).catch(() => null),
+      fetchAnsSingle(ufSigla, POA_CNES).catch(() => null),
+      fetchAnsMulti(ufSigla, microCods6).catch(() => null),
       getJSON(`${LEITOS}?cod=${POA_CNES}`).catch(() => null),
       getJSON(`${LEITOS}/multi?cods=${POA_CNES}`).catch(() => null),
       getJSON(`${LEITOS}/multi?cods=${microCods6}`).catch(() => null),
@@ -1039,20 +1346,20 @@ state.estabsPOAMicro = estabsPOAMicro;
     const cityCod6 = String(ibgeId).slice(0,6);
     const microCods6 = microIds.map(i => i.slice(0,6)).join(",");
     const [ansCityRaw, ansMicroRaw, ansHistCityRaw, ansHistMicroRaw, ansCaxiasRawRef] = await Promise.all([
-  getJSON(`${ANS}?uf=${ufSigla}&cod=${cityCod6}`).catch(() => null),
-  getJSON(`${ANS}/multi?uf=${ufSigla}&cods=${microCods6}`).catch(() => null),
-  getJSON(`${ANS}/history?uf=${ufSigla}&cods=${cityCod6}`).catch(() => ({ series: [] })),
-  getJSON(`${ANS}/history?uf=${ufSigla}&cods=${microCods6}`).catch(() => ({ series: [] })),
-  getJSON(`${ANS}?uf=RS&cod=${CAXIAS_CNES}`).catch(() => null),
+  fetchAnsSingle(ufSigla, cityCod6).catch(() => null),
+  fetchAnsMulti(ufSigla, microCods6).catch(() => null),
+  fetchAnsHistory(ufSigla, cityCod6).catch(() => ({ series: [] })),
+  fetchAnsHistory(ufSigla, microCods6).catch(() => ({ series: [] })),
+  fetchAnsSingle("RS", CAXIAS_CNES).catch(() => null),
 ]);
 
 const ansCity = ansMHOnly(ansCityRaw);
 const ansMicro = ansMHOnly(ansMicroRaw);
 const ansCaxiasRef = ansMHOnly(ansCaxiasRawRef);
     
-    // Para o histórico, usamos só mh (já vem quebrado)
-    const ansHistCity = { series: (ansHistCityRaw?.series || []).map(s => ({ month: s.month, total: s.mh })) };
-    const ansHistMicro = { series: (ansHistMicroRaw?.series || []).map(s => ({ month: s.month, total: s.mh })) };
+    // Histórico ANS normalizado para aceitar payloads de RS e SC.
+    const ansHistCity = normalizeAnsHistory(ansHistCityRaw);
+    const ansHistMicro = normalizeAnsHistory(ansHistMicroRaw);
 
     // 6) Leitos via ElastiCNES (+ serviços dos 3 maiores) + histórico anual + referência POA
     showLoader("Carregando leitos (ElastiCNES)… pode levar alguns segundos.");
@@ -2847,7 +3154,7 @@ async function fetchAnsMHByMunicipios(uf, ids) {
     const cod6 = String(id).slice(0, 6);
 
     try {
-      const raw = await getJSON(`${ANS}?uf=${uf}&cod=${cod6}`);
+      const raw = await fetchAnsSingle(uf, cod6);
       out[String(id)] = ansMHOnly(raw);
     } catch {
       out[String(id)] = null;
@@ -2971,7 +3278,7 @@ async function buildRegionalBubblePoints({
   fetchPIBByMunicipios([...microIds, CAXIAS_IBGE, POA_IBGE]).catch(() => ({})),
 
   fetchPopByMunicipios([CAXIAS_IBGE, POA_IBGE]).catch(() => ({})),
-  getJSON(`${ANS}?uf=RS&cod=${String(CAXIAS_IBGE).slice(0, 6)}`).catch(() => null),
+  fetchAnsSingle("RS", String(CAXIAS_IBGE).slice(0, 6)).catch(() => null),
   getJSON(`${LEITOS}?cod=${String(CAXIAS_IBGE).slice(0, 6)}`).catch(() => null),
 ]);
 
@@ -3209,7 +3516,7 @@ async function renderIQMandBubble(ctx) {
       fetchPopByMunicipios([CAXIAS_IBGE]).catch(() => ({})),
       fetchRendimento(CAXIAS_IBGE).catch(() => []),
       fetchCenso2010(CAXIAS_IBGE).catch(() => null),
-      getJSON(`${ANS}?uf=RS&cod=${CAXIAS_CNES}`).catch(() => null),
+      fetchAnsSingle("RS", CAXIAS_CNES).catch(() => null),
       getJSON(`${LEITOS}?cod=${CAXIAS_CNES}`).catch(() => null),
     ]);
 
@@ -3250,8 +3557,8 @@ async function renderIQMandBubble(ctx) {
   const poaEstabsHosp = hospitalCountForIQM(state.estabsPOA, poaRef?.city);
 
   const poaPop = poaRef?.city?.pop || 0;
-  const poaAnsHistRaw = await getJSON(`${ANS}/history?uf=RS&cods=${POA_CNES}`).catch(() => ({ series: [] }));
-  const poaCagr = cagrFromAnsSeries((poaAnsHistRaw?.series || []).map(s => ({ month: s.month, total: s.mh })));
+  const poaAnsHistRaw = await fetchAnsHistory("RS", POA_CNES).catch(() => ({ series: [] }));
+  const poaCagr = cagrFromAnsSeries(normalizeAnsHistory(poaAnsHistRaw).series);
 
   const poaCagrPop = (poaPop && poaCenso2010)
     ? (Math.pow(poaPop / poaCenso2010, 1 / 12) - 1) * 100
