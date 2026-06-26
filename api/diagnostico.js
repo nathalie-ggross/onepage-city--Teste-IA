@@ -1,15 +1,4 @@
 export default async function handler(req, res) {
-  if (req.method === "GET") {
-    return res.status(200).json({
-      ok: true,
-      rota: "/api/diagnostico",
-      gemini_key_configurada: Boolean(process.env.GEMINI_API_KEY),
-      gemini_key_prefixo: process.env.GEMINI_API_KEY
-        ? process.env.GEMINI_API_KEY.slice(0, 4)
-        : null
-    });
-  }
-
   if (req.method !== "POST") {
     return res.status(405).json({
       erro: "Método não permitido. Use POST."
@@ -34,15 +23,17 @@ export default async function handler(req, res) {
     }
 
     const resposta = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
         },
         body: JSON.stringify({
           contents: [
             {
+              role: "user",
               parts: [
                 {
                   text: prompt
