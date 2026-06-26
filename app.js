@@ -4138,20 +4138,9 @@ async function gerarDiagnosticoIA() {
     return;
   }
 
-  const cacheKey = `diagnostico_ia_${dados.municipio}_${dados.iqm_corrigido}_${dados.classe_iqm}`;
-
-  const cache = localStorage.getItem(cacheKey);
-
-  if (cache) {
-    status.textContent = "Diagnóstico recuperado do cache local. Nenhuma nova chamada à IA foi realizada.";
-    respostaBox.hidden = false;
-    respostaBox.innerHTML = iaFormatarResposta(cache);
-    return;
-  }
-
   botao.disabled = true;
   botao.textContent = "Gerando diagnóstico...";
-  status.textContent = "Enviando os indicadores selecionados para a IA. Aguarde alguns segundos.";
+  status.textContent = "Chamando a API do Gemini. Aguarde alguns segundos.";
   respostaBox.hidden = true;
   respostaBox.innerHTML = "";
 
@@ -4170,12 +4159,23 @@ async function gerarDiagnosticoIA() {
 
     if (!resposta.ok) {
       console.error("Erro na API de diagnóstico:", json);
-      throw new Error(json.erro || "Erro ao gerar diagnóstico.");
+
+      const detalhe =
+        json?.detalhe?.error?.message ||
+        json?.detalhe?.message ||
+        json?.erro ||
+        "Erro desconhecido ao gerar diagnóstico.";
+
+      throw new Error(
+        typeof detalhe === "string" ? detalhe : JSON.stringify(detalhe)
+      );
     }
 
     const texto = json.texto || "";
 
-    localStorage.setItem(cacheKey, texto);
+    if (!texto || texto.includes("Não foi possível gerar o diagnóstico")) {
+      throw new Error("A API respondeu, mas não trouxe um texto válido do Gemini.");
+    }
 
     status.textContent = "Diagnóstico gerado com sucesso.";
     respostaBox.hidden = false;
@@ -4183,9 +4183,15 @@ async function gerarDiagnosticoIA() {
 
   } catch (erro) {
     console.error(erro);
-    status.textContent = "Não foi possível gerar o diagnóstico IA neste momento. Verifique a API, a chave Gemini ou tente novamente.";
-    respostaBox.hidden = true;
-    respostaBox.innerHTML = "";
+
+    status.textContent = "Erro ao gerar diagnóstico IA.";
+    respostaBox.hidden = false;
+    respostaBox.innerHTML = iaFormatarResposta(
+      `Não foi possível gerar o diagnóstico.
+
+Detalhe técnico: ${erro.message}`
+    );
+
   } finally {
     botao.disabled = false;
     botao.textContent = "Gerar diagnóstico IA";
