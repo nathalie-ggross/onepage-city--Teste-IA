@@ -3892,3 +3892,310 @@ function renderBubbleChart(points) {
     }],
   });
 }
+/* ================= DIAGNÓSTICO IA ================= */
+
+function iaTextoSeguro(valor) {
+  if (valor === null || valor === undefined || valor === "") return "Não informado";
+  return String(valor).trim();
+}
+
+function iaTextoPorId(id) {
+  const el = document.getElementById(id);
+  if (!el) return "";
+  return String(el.textContent || "").trim();
+}
+
+function iaNormalizarChave(valor) {
+  return String(valor || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function iaBuscarEmObjeto(obj, candidatos, profundidadeMaxima = 4) {
+  if (!obj || typeof obj !== "object") return "";
+
+  const alvos = candidatos.map(iaNormalizarChave);
+  const visitados = new WeakSet();
+
+  function caminhar(atual, profundidade) {
+    if (!atual || typeof atual !== "object") return "";
+    if (visitados.has(atual)) return "";
+    if (profundidade > profundidadeMaxima) return "";
+
+    visitados.add(atual);
+
+    for (const [chave, valor] of Object.entries(atual)) {
+      const chaveNormalizada = iaNormalizarChave(chave);
+
+      const bateu = alvos.some((alvo) => {
+        return chaveNormalizada === alvo ||
+               chaveNormalizada.includes(alvo) ||
+               alvo.includes(chaveNormalizada);
+      });
+
+      if (bateu && valor !== null && valor !== undefined && typeof valor !== "object") {
+        return valor;
+      }
+    }
+
+    for (const valor of Object.values(atual)) {
+      if (valor && typeof valor === "object") {
+        const encontrado = caminhar(valor, profundidade + 1);
+        if (encontrado !== "") return encontrado;
+      }
+    }
+
+    return "";
+  }
+
+  return caminhar(obj, 0);
+}
+
+function iaObterCidadeAtual() {
+  try {
+    if (typeof state !== "undefined" && state && state.city) {
+      return state.city;
+    }
+  } catch (e) {
+    return null;
+  }
+
+  return null;
+}
+
+function iaMontarDadosMunicipio() {
+  const cidade = iaObterCidadeAtual();
+
+  const municipio =
+    iaBuscarEmObjeto(cidade, ["municipio", "cidade", "nome"]) ||
+    iaTextoPorId("city-title");
+
+  const microrregiao =
+    iaBuscarEmObjeto(cidade, ["microrregiao", "microregiao", "micro"]) ||
+    iaTextoPorId("micro-title") ||
+    iaTextoPorId("city-sub");
+
+  const dados = {
+    municipio,
+    microrregiao,
+
+    iqm_corrigido:
+      iaBuscarEmObjeto(cidade, ["iqm corrigido", "iqm_corrigido", "iqm"]) ||
+      iaTextoPorId("city-iqm-value"),
+
+    classe_iqm:
+      iaBuscarEmObjeto(cidade, ["classe iqm", "classe_iqm", "classe"]) ||
+      iaTextoPorId("city-iqm-tier"),
+
+    prioridade_sugerida:
+      iaBuscarEmObjeto(cidade, ["prioridade sugerida", "prioridade_sugerida", "prioridade"]),
+
+    mercado_privado:
+      iaBuscarEmObjeto(cidade, ["mercado privado", "mercado_privado"]),
+
+    cobertura_ans:
+      iaBuscarEmObjeto(cidade, ["cobertura ans", "cobertura_ans"]) ||
+      iaTextoPorId("city-ans-pct"),
+
+    populacao_com_plano:
+      iaBuscarEmObjeto(cidade, ["populacao com plano", "populacao com plano de saude", "beneficiarios ans"]) ||
+      iaTextoPorId("city-ans-total"),
+
+    pressao_assistencial:
+      iaBuscarEmObjeto(cidade, ["pressao assistencial", "pressao_assistencial"]),
+
+    leitura_pressao:
+      iaBuscarEmObjeto(cidade, ["leitura da pressao assistencial", "leitura_pressao", "leitura_pressao_assistencial"]),
+
+    potencial_captura_local:
+      iaBuscarEmObjeto(cidade, ["potencial de captura local", "potencial_captura_local", "captura local"]),
+
+    oferta_medica:
+      iaBuscarEmObjeto(cidade, ["oferta medica", "oferta_medica", "medicos procedimento"]),
+
+    score_leitos_privados:
+      iaBuscarEmObjeto(cidade, ["score leitos privados", "score_leitos_privados", "leitos privados"]) ||
+      iaTextoPorId("city-leitos-priv"),
+
+    score_populacao_60:
+      iaBuscarEmObjeto(cidade, ["score populacao 60", "score_populacao_60", "populacao 60"]) ||
+      iaTextoPorId("city-60"),
+
+    score_centralidade_regional:
+      iaBuscarEmObjeto(cidade, ["score centralidade regional", "score_centralidade_regional", "centralidade regional"]),
+
+    ambiente_competitivo:
+      iaBuscarEmObjeto(cidade, ["ambiente competitivo", "ambiente_competitivo"]),
+
+    detrator_hhi:
+      iaBuscarEmObjeto(cidade, ["detrator hhi", "detrator_hhi", "hhi"]),
+
+    leitos_privados:
+      iaTextoPorId("city-leitos-priv"),
+
+    hospitais:
+      iaTextoPorId("city-hosp-count"),
+
+    beneficiarios_por_leito_privado:
+      iaTextoPorId("city-benefxleito-priv"),
+
+    medicos_10_mil:
+      iaTextoPorId("city-medxbenef")
+  };
+
+  return dados;
+}
+
+function iaMontarPrompt(dados) {
+  return `
+Você é um consultor executivo de inteligência de mercado em saúde privada.
+
+Sua tarefa é escrever uma conclusão executiva sobre o município selecionado no painel One Page.
+
+Regras obrigatórias:
+- Escreva em português do Brasil.
+- Escreva exatamente 2 parágrafos.
+- Cada parágrafo deve ter no máximo 3 frases.
+- Não use tópicos.
+- Não use markdown.
+- Não invente dados.
+- Não recalcule indicadores.
+- Não explique a metodologia.
+- Use apenas os dados enviados.
+- Seja direto, objetivo e executivo.
+- A conclusão deve comentar atratividade, riscos e implicação estratégica.
+- Se algum campo estiver como "Não informado", simplesmente não destaque esse campo.
+
+Contexto dos indicadores:
+- Mercado Privado mede a atratividade privada do município.
+- Pressão Assistencial mede desequilíbrio entre demanda privada e estrutura local.
+- Potencial de Captura Local indica capacidade de reter localmente a demanda.
+- Oferta Médica e Leitos Privados indicam sustentação assistencial.
+- População 60+ é proxy de maior complexidade assistencial.
+- Ambiente Competitivo alto indica mercado menos concentrado e mais favorável.
+- Detrator HHI penaliza concentração de operadoras.
+- IQM Corrigido é o score final de atratividade.
+- Prioridade Sugerida é a recomendação final do modelo.
+
+Dados do município:
+Município: ${iaTextoSeguro(dados.municipio)}
+Microrregião: ${iaTextoSeguro(dados.microrregiao)}
+IQM Corrigido: ${iaTextoSeguro(dados.iqm_corrigido)}
+Classe IQM: ${iaTextoSeguro(dados.classe_iqm)}
+Prioridade Sugerida: ${iaTextoSeguro(dados.prioridade_sugerida)}
+Mercado Privado: ${iaTextoSeguro(dados.mercado_privado)}
+Cobertura ANS: ${iaTextoSeguro(dados.cobertura_ans)}
+População com plano de saúde: ${iaTextoSeguro(dados.populacao_com_plano)}
+Pressão Assistencial: ${iaTextoSeguro(dados.pressao_assistencial)}
+Leitura da Pressão: ${iaTextoSeguro(dados.leitura_pressao)}
+Potencial de Captura Local: ${iaTextoSeguro(dados.potencial_captura_local)}
+Oferta Médica: ${iaTextoSeguro(dados.oferta_medica)}
+Score Leitos Privados: ${iaTextoSeguro(dados.score_leitos_privados)}
+Score População 60+: ${iaTextoSeguro(dados.score_populacao_60)}
+Score Centralidade Regional: ${iaTextoSeguro(dados.score_centralidade_regional)}
+Ambiente Competitivo: ${iaTextoSeguro(dados.ambiente_competitivo)}
+Detrator HHI: ${iaTextoSeguro(dados.detrator_hhi)}
+Leitos privados: ${iaTextoSeguro(dados.leitos_privados)}
+Hospitais: ${iaTextoSeguro(dados.hospitais)}
+Beneficiários por leito privado: ${iaTextoSeguro(dados.beneficiarios_por_leito_privado)}
+Médicos por 10 mil habitantes: ${iaTextoSeguro(dados.medicos_10_mil)}
+`;
+}
+
+function iaFormatarResposta(texto) {
+  const partes = String(texto || "")
+    .split(/\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  if (!partes.length) return "";
+
+  return partes
+    .map((p) => `<p>${p
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;")}</p>`)
+    .join("");
+}
+
+async function gerarDiagnosticoIA() {
+  const botao = document.getElementById("btn-diagnostico-ia");
+  const status = document.getElementById("diagnostico-ia-status");
+  const respostaBox = document.getElementById("diagnostico-ia-resposta");
+
+  if (!botao || !status || !respostaBox) return;
+
+  const dados = iaMontarDadosMunicipio();
+
+  if (!dados.municipio || dados.municipio === "—") {
+    status.textContent = "Selecione um município antes de gerar o diagnóstico.";
+    respostaBox.hidden = true;
+    respostaBox.innerHTML = "";
+    return;
+  }
+
+  const cacheKey = `diagnostico_ia_${dados.municipio}_${dados.iqm_corrigido}_${dados.classe_iqm}`;
+
+  const cache = localStorage.getItem(cacheKey);
+
+  if (cache) {
+    status.textContent = "Diagnóstico recuperado do cache local. Nenhuma nova chamada à IA foi realizada.";
+    respostaBox.hidden = false;
+    respostaBox.innerHTML = iaFormatarResposta(cache);
+    return;
+  }
+
+  botao.disabled = true;
+  botao.textContent = "Gerando diagnóstico...";
+  status.textContent = "Enviando os indicadores selecionados para a IA. Aguarde alguns segundos.";
+  respostaBox.hidden = true;
+  respostaBox.innerHTML = "";
+
+  try {
+    const prompt = iaMontarPrompt(dados);
+
+    const resposta = await fetch("/api/diagnostico", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ prompt })
+    });
+
+    const json = await resposta.json();
+
+    if (!resposta.ok) {
+      console.error("Erro na API de diagnóstico:", json);
+      throw new Error(json.erro || "Erro ao gerar diagnóstico.");
+    }
+
+    const texto = json.texto || "";
+
+    localStorage.setItem(cacheKey, texto);
+
+    status.textContent = "Diagnóstico gerado com sucesso.";
+    respostaBox.hidden = false;
+    respostaBox.innerHTML = iaFormatarResposta(texto);
+
+  } catch (erro) {
+    console.error(erro);
+    status.textContent = "Não foi possível gerar o diagnóstico IA neste momento. Verifique a API, a chave Gemini ou tente novamente.";
+    respostaBox.hidden = true;
+    respostaBox.innerHTML = "";
+  } finally {
+    botao.disabled = false;
+    botao.textContent = "Gerar diagnóstico IA";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const botao = document.getElementById("btn-diagnostico-ia");
+
+  if (botao) {
+    botao.addEventListener("click", gerarDiagnosticoIA);
+  }
+});
