@@ -1,17 +1,29 @@
 export default async function handler(req, res) {
-
   if (req.method !== "POST") {
     return res.status(405).json({
-      erro: "Método não permitido"
+      erro: "Método não permitido. Use POST."
     });
   }
 
   try {
+    const { prompt } = req.body || {};
 
-    const { prompt } = req.body;
+    if (!prompt) {
+      return res.status(400).json({
+        erro: "Prompt não enviado."
+      });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({
+        erro: "GEMINI_API_KEY não configurada na Vercel."
+      });
+    }
 
     const resposta = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: {
@@ -26,29 +38,44 @@ export default async function handler(req, res) {
                 }
               ]
             }
-          ]
+          ],
+          generationConfig: {
+            temperature: 0.25,
+            maxOutputTokens: 450
+          }
         })
       }
     );
 
     const json = await resposta.json();
 
-    const texto =
-      json.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "Não foi possível gerar o diagnóstico.";
+    if (!resposta.ok) {
+      return res.status(resposta.status).json({
+        erro: "Erro retornado pelo Gemini.",
+        detalhe: json
+      });
+    }
+
+    const texto = json?.candidates?.[0]?.content?.parts
+      ?.map((parte) => parte.text || "")
+      ?.join("")
+      ?.trim();
+
+    if (!texto) {
+      return res.status(500).json({
+        erro: "O Gemini respondeu, mas não retornou texto utilizável.",
+        detalhe: json
+      });
+    }
 
     return res.status(200).json({
       texto
     });
 
   } catch (erro) {
-
-    console.error(erro);
-
     return res.status(500).json({
-      erro: erro.message
+      erro: "Erro interno na API de diagnóstico.",
+      detalhe: erro.message
     });
-
   }
-
 }
