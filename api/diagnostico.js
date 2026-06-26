@@ -1,4 +1,15 @@
 export default async function handler(req, res) {
+  if (req.method === "GET") {
+    return res.status(200).json({
+      ok: true,
+      rota: "/api/diagnostico",
+      gemini_key_configurada: Boolean(process.env.GEMINI_API_KEY),
+      gemini_key_prefixo: process.env.GEMINI_API_KEY
+        ? process.env.GEMINI_API_KEY.slice(0, 4)
+        : null
+    });
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({
       erro: "Método não permitido. Use POST."
@@ -52,6 +63,7 @@ export default async function handler(req, res) {
     if (!resposta.ok) {
       return res.status(resposta.status).json({
         erro: "Erro retornado pelo Gemini.",
+        status: resposta.status,
         detalhe: json
       });
     }
