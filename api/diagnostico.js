@@ -1,4 +1,17 @@
 export default async function handler(req, res) {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (req.method === "GET") {
+    return res.status(200).json({
+      ok: true,
+      rota: "/api/diagnostico",
+      gemini_key_configurada: Boolean(apiKey),
+      gemini_key_prefixo: apiKey ? apiKey.slice(0, 4) : null,
+      gemini_key_final: apiKey ? apiKey.slice(-4) : null,
+      gemini_key_tamanho: apiKey ? apiKey.length : 0
+    });
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({
       erro: "Método não permitido. Use POST."
@@ -13,8 +26,6 @@ export default async function handler(req, res) {
         erro: "Prompt não enviado."
       });
     }
-
-    const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       return res.status(500).json({
